@@ -5,10 +5,8 @@ import { BookOpenCheck, Brain, Home, Library, ListChecks, NotebookPen, Pencil, P
 import { db } from "@/lib/db";
 import { cn } from "@/lib/cn";
 import { initials } from "@/lib/format";
-import { rankPanels, readableOn, type PanelId } from "@/lib/adaptive";
+import { readableOn } from "@/lib/adaptive";
 import { IconButton } from "./ui";
-import { useAdaptive } from "./use-adaptive";
-import { useNow } from "./use-now";
 import type { Subject } from "@/lib/schemas";
 import type { View } from "./app-shell";
 
@@ -26,16 +24,15 @@ type Props = {
   frozen?: boolean;
 };
 
-// Ordem padrão dos painéis (a mesma de antes da personalização); "Início" fica sempre no topo.
-const PANEL_NAV: { kind: PanelId; label: string; icon: typeof Home }[] = [
-  { kind: "tasks", label: "Tarefas", icon: ListChecks },
+// Ordem fixa para preservar a memória muscular: a navegação não muda sozinha.
+const PANEL_NAV = [
+  { kind: "quizzes", label: "Quizzes", icon: BookOpenCheck },
   { kind: "notes", label: "Anotações", icon: NotebookPen },
+  { kind: "tasks", label: "Tarefas", icon: ListChecks },
   { kind: "focus", label: "Foco", icon: Timer },
   { kind: "flashcards", label: "Flashcards", icon: Brain },
-  { kind: "quizzes", label: "Quizzes", icon: BookOpenCheck },
   { kind: "library", label: "Biblioteca", icon: Library },
-];
-const DEFAULT_ORDER = PANEL_NAV.map((p) => p.kind);
+] as const;
 
 // Rótulos somem (sem sair do DOM, para leitores de tela) quando só o trilho de ícones está visível.
 const fade = (collapsed: boolean) => cn("truncate transition-opacity duration-150", collapsed && "opacity-0");
@@ -45,14 +42,7 @@ const ROW = "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transit
 export function Sidebar({ view, onNavigate, onNewSubject, onEditSubject, onDeleteSubject, collapsed = false, pin, frozen = false }: Props) {
   const profile = useLiveQuery(() => db.profile.get("me").then((p) => p ?? null), []);
   const subjects = useLiveQuery(() => db.subjects.toArray().then((a) => a.sort((x, y) => x.createdAt - y.createdAt)), []);
-  const adaptive = useAdaptive();
-  const now = useNow(3_600_000);
-
-  const live = rankPanels(DEFAULT_ORDER, adaptive.panels, now);
-  // Ajuste de estado durante a renderização (padrão do React): adota a nova ordem só quando o mouse sai da barra.
-  const [order, setOrder] = useState(live);
-  if (!frozen && order.join() !== live.join()) setOrder(live);
-  const nav = [{ kind: "home" as const, label: "Início", icon: Home }, ...order.map((k) => PANEL_NAV.find((p) => p.kind === k)!)];
+  const nav = [{ kind: "home" as const, label: "Início", icon: Home }, ...PANEL_NAV];
 
   return (
     <div className="flex h-full w-full flex-col bg-surface">
@@ -91,14 +81,14 @@ export function Sidebar({ view, onNavigate, onNewSubject, onEditSubject, onDelet
             key={kind}
             onClick={() => onNavigate({ kind })}
             aria-current={view.kind === kind ? "page" : undefined}
-            className={cn(ROW, "sidebar-nav-item", view.kind === kind ? "text-fg" : "")}
+            className={cn(ROW, "sidebar-nav-item", view.kind === kind ? "text-fg" : "", collapsed && "justify-center px-0")}
           >
-            <Icon className="size-4 shrink-0" aria-hidden /> <span className={fade(collapsed)}>{label}</span>
+            <Icon className="size-4 shrink-0" aria-hidden /> <span className={cn(fade(collapsed), collapsed && "w-0")}>{label}</span>
           </button>
         ))}
       </nav>
 
-      <div className="mx-3 mt-3 border-t border-line" />
+      <div className="h-3 shrink-0" />
       <div className={cn("mt-2 flex items-center justify-between px-5 transition-opacity", collapsed && "opacity-0")}>
         <h2 className="sidebar-section-label">Disciplinas</h2>
         <IconButton label="Nova disciplina" onClick={onNewSubject}><Plus className="size-4" /></IconButton>
@@ -116,12 +106,12 @@ export function Sidebar({ view, onNavigate, onNewSubject, onEditSubject, onDelet
               <button
                 onClick={() => onNavigate({ kind: "subject", id: s.id })}
                 aria-current={active ? "page" : undefined}
-                className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2 text-left text-sm"
+                className={cn("flex min-w-0 flex-1 items-center gap-3 px-3 py-2 text-left text-sm", collapsed && "justify-center px-0")}
               >
-                <span className="flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-md text-xs font-semibold shadow-sm" style={{ background: s.color, color: readableOn(s.color) }} aria-hidden>
+                <span className="flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-md text-xs font-semibold" style={{ background: s.color, color: readableOn(s.color) }} aria-hidden>
                   {s.icon?.startsWith("data:image/") ? <img src={s.icon} alt="" className="size-full object-cover" /> : s.icon ? s.icon : s.name.trim().slice(0, 1).toLocaleUpperCase("pt-BR")}
                 </span>
-                <span className={cn(fade(collapsed), active ? "text-fg" : "text-muted group-hover:text-fg")}>{s.name}</span>
+                <span className={cn(fade(collapsed), active ? "text-fg" : "text-muted group-hover:text-fg", collapsed && "w-0")}>{s.name}</span>
               </button>
               <span className="flex pr-1 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100 max-md:opacity-100">
                 <IconButton label={`Editar ${s.name}`} onClick={() => onEditSubject(s)}><Pencil className="size-3.5" /></IconButton>
