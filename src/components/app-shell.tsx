@@ -143,7 +143,17 @@ export function AppShell() {
       <div className="flex min-w-0 flex-1 flex-col" style={accent}>
         <header className="app-topbar flex items-center gap-3 border-b border-line px-4 py-3 md:px-6">
           <IconButton label="Abrir menu" onClick={() => setDrawer(true)} className="md:hidden"><Menu className="size-5" /></IconButton>
-          <div className="min-w-0"><p className="topbar-kicker hidden sm:block">SEU ESPAÇO DE ESTUDOS</p><h1 className="truncate text-base font-semibold">{title}</h1></div>
+          <div className="min-w-0">
+            <p className="topbar-kicker hidden sm:block">SEU ESPAÇO DE ESTUDOS</p>
+            <div className="flex min-w-0 items-center gap-2">
+              {view.kind === "subject" && activeSubject && (
+                <span className="discipline-title-mark flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-md text-xs font-semibold" style={{ background: activeSubject.color, color: readableOn(activeSubject.color) }} aria-hidden>
+                  {activeSubject.icon?.startsWith("data:image/") ? <img src={activeSubject.icon} alt="" className="size-full object-cover" /> : activeSubject.icon ? activeSubject.icon : activeSubject.name.trim().slice(0, 1).toLocaleUpperCase("pt-BR")}
+                </span>
+              )}
+              <h1 className="truncate text-base font-semibold">{title}</h1>
+            </div>
+          </div>
           <div className="ml-auto flex shrink-0 items-center gap-2">
             {timer.state.status !== "idle" && view.kind !== "focus" && !chatOpen && (
               <button onClick={() => navigate({ kind: "focus" })} aria-label={`Cronômetro de ${timer.state.phase === "focus" ? "foco" : "descanso"}: ${timer.clock}. Abrir`}
