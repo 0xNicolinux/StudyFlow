@@ -293,10 +293,10 @@ function ProfileEditor({ profile, onSaved }: { profile: Profile | null | undefin
           <span className="text-sm font-medium">Foto ou vídeo de perfil</span>
           <span className="text-xs text-muted">Imagem/GIF ou vídeo MP4/WebM, até 2,8 MB</span>
           <div className="flex flex-wrap gap-2">
-            <Button type="button" onClick={() => avatarInput.current?.click()}>Escolher foto</Button>
+            <Button type="button" onClick={() => avatarInput.current?.click()}>Escolher mídia</Button>
             {photo && <Button type="button" variant="ghost" onClick={() => setPhoto(null)}>Remover</Button>}
           </div>
-          <input ref={avatarInput} className="hidden" type="file" accept="image/*,video/mp4,video/webm" onChange={(e) => void readImage(e.target.files?.[0], "photo") />
+          <input ref={avatarInput} className="hidden" type="file" accept="image/*,video/mp4,video/webm" onChange={(e) => void readImage(e.target.files?.[0], "photo")} />
         </div>
       </div>
       <div className="space-y-2">
