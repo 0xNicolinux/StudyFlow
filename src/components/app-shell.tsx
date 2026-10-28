@@ -110,13 +110,14 @@ export function AppShell() {
   };
 
   // Ao entrar numa disciplina, o acento da área de trabalho assume a cor dela (botões, abas, foco).
+  const globalTheme: CSSProperties = { "--accent": preferredAccent, "--accent-fg": readableOn(preferredAccent) } as CSSProperties;
   const accent: CSSProperties = view.kind === "subject" && activeSubject
     ? ({ "--accent": activeSubject.color, "--accent-fg": readableOn(activeSubject.color) } as CSSProperties)
     : ({ "--accent": preferredAccent, "--accent-fg": readableOn(preferredAccent) } as CSSProperties);
 
   return (
     <ChatCtx.Provider value={chat}>
-    <div className="app-shell-root flex h-dvh">
+    <div className="app-shell-root flex h-dvh" style={globalTheme}>
       {/* Reserva o espaço no layout (largo se fixada, só o trilho se não); a barra em si flutua por cima ao expandir. */}
       <div className={cn("relative hidden shrink-0 md:block", side.animate && "transition-[width] duration-200 ease-out", side.pinned ? "w-72" : "w-14")}>
         <aside
