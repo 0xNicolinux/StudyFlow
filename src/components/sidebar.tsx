@@ -56,40 +56,34 @@ export function Sidebar({ view, onNavigate, onNewSubject, onEditSubject, onDelet
 
   return (
     <div className="flex h-full w-full flex-col bg-surface">
-      <div className="sidebar-brand">
-        {pin && (
-          <IconButton label="Fixar barra lateral" aria-pressed={pin.pinned} onClick={pin.onToggle} className={cn(pin.pinned && "bg-accent/15 text-accent hover:bg-accent/25")}>
+      <div className={cn("sidebar-profile-row flex items-center gap-1", collapsed ? "mx-2 my-3 justify-center" : "mx-3 mb-3 mt-2")}>
+        <button
+          onClick={() => onNavigate({ kind: "settings" })}
+          className={cn("sidebar-profile flex min-w-0 items-center gap-3 text-left", collapsed ? "justify-center" : "flex-1")}
+          aria-label="Perfil e configurações"
+          title={collapsed ? profile?.name ?? "Estudante" : undefined}
+        >
+          {profile?.photo ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={profile.photo} alt="" className="size-9 shrink-0 rounded-full object-cover" />
+          ) : (
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-accent/20 text-sm font-semibold text-accent">
+              {initials(profile?.name ?? "Estudante")}
+            </span>
+          )}
+          {!collapsed && (
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-sm font-medium">{profile?.name ?? "Estudante"}</span>
+              <span className="block text-xs text-muted">Perfil local</span>
+            </span>
+          )}
+        </button>
+        {pin && !collapsed && (
+          <IconButton label="Fixar barra lateral" aria-pressed={pin.pinned} onClick={pin.onToggle} className={cn(pin.pinned && "text-fg")}>
             <Pin className={cn("size-4 transition-transform", pin.pinned ? "fill-current" : "rotate-45")} aria-hidden />
           </IconButton>
         )}
-        <span className="sidebar-brand-mark" aria-hidden><BookOpenCheck className="size-[1.2rem]" strokeWidth={2.2} /></span>
-        <span className={cn("sidebar-brand-copy", collapsed && "opacity-0")}>
-          <span className="sidebar-brand-name">StudyFlow</span>
-          <span className="sidebar-brand-tagline">ESTUDOS LOCAIS</span>
-        </span>
       </div>
-
-      <button
-        onClick={() => onNavigate({ kind: "settings" })}
-        className={cn(
-          "sidebar-profile flex items-center gap-3 rounded-xl border text-left transition-[margin,padding,background-color,border-color]",
-          collapsed ? "mx-2.5 my-3 border-transparent bg-transparent p-0" : "m-3 border-line bg-surface-2 p-2.5 hover:bg-surface-3",
-        )}
-        aria-label="Perfil e configurações"
-      >
-        {profile?.photo ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={profile.photo} alt="" className="size-9 shrink-0 rounded-full object-cover" />
-        ) : (
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-accent/20 text-sm font-semibold text-accent">
-            {initials(profile?.name ?? "Estudante")}
-          </span>
-        )}
-        <span className={cn("min-w-0 transition-opacity duration-150", collapsed && "opacity-0")}>
-          <span className="block truncate text-sm font-medium">{profile?.name ?? "Estudante"}</span>
-          <span className="block text-xs text-muted">Perfil local</span>
-        </span>
-      </button>
 
       <nav aria-label="Principal" className="space-y-0.5 px-2">
         {nav.map(({ kind, label, icon: Icon }) => (
