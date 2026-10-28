@@ -9,10 +9,10 @@ export function LandingPage() {
         <AsciiOcean
           className="landing-ocean-canvas"
           sharks={[
-            { kind: "hammerhead", size: 1.75 },
-            { kind: "mako", size: 1.2 },
-            { kind: "classic", size: 0.95 },
-            { kind: "thresher", size: 0.78 },
+            { kind: "hammerhead", size: 2.25 },
+            { kind: "mako", size: 1.45 },
+            { kind: "classic", size: 1.05 },
+            { kind: "thresher", size: 0.86 },
           ]}
         />
       </div>
