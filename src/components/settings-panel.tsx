@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState } from "react";
+import { useRef, useState, type CSSProperties } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { Check, Download, Upload } from "lucide-react";
 import { db } from "@/lib/db";
@@ -41,7 +41,7 @@ function AppearanceSection() {
             title={option.label}
             onClick={() => themeStore.set({ accent: option.color })}
             className={`accent-swatch ${accent === option.color ? "is-selected" : ""}`}
-            style={{ "--swatch": option.color } as React.CSSProperties}
+            style={{ "--swatch": option.color } as CSSProperties}
           >
             {accent === option.color && <Check size={15} aria-hidden />}
           </button>
