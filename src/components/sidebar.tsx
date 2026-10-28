@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+
 import { useLiveQuery } from "dexie-react-hooks";
 import { BookOpenCheck, Brain, Home, Library, ListChecks, NotebookPen, Pencil, Pin, Plus, Settings, Timer, Trash2 } from "lucide-react";
 import { db } from "@/lib/db";
@@ -39,7 +39,7 @@ const fade = (collapsed: boolean) => cn("truncate transition-opacity duration-15
 
 const ROW = "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors";
 
-export function Sidebar({ view, onNavigate, onNewSubject, onEditSubject, onDeleteSubject, collapsed = false, pin, frozen = false }: Props) {
+export function Sidebar({ view, onNavigate, onNewSubject, onEditSubject, onDeleteSubject, collapsed = false, pin }: Props) {
   const profile = useLiveQuery(() => db.profile.get("me").then((p) => p ?? null), []);
   const subjects = useLiveQuery(() => db.subjects.toArray().then((a) => a.sort((x, y) => x.createdAt - y.createdAt)), []);
   const nav = [{ kind: "home" as const, label: "Início", icon: Home }, ...PANEL_NAV];
