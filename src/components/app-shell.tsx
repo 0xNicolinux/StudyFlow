@@ -122,7 +122,7 @@ export function AppShell() {
             side.expanded && !side.pinned && "shadow-2xl shadow-black/50",
           )}
         >
-          <div className="h-full w-72">
+          <div className={cn("h-full", side.expanded ? "w-72" : "w-14")}>
             <Sidebar {...sidebarProps} collapsed={!side.expanded} frozen={side.pointerInside} pin={{ pinned: side.pinned, onToggle: side.togglePin }} />
           </div>
         </aside>
