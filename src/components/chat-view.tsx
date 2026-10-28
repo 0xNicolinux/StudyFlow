@@ -3,28 +3,39 @@ import { useEffect, useRef } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { AlertTriangle, ArrowLeft, MessageSquarePlus, RotateCcw, Settings, Trash2 } from "lucide-react";
 import { db } from "@/lib/db";
-import { clearAllConversations } from "@/lib/repo";
+import { clearConversations, deleteConversation, listConversations } from "@/lib/repo";
 import { Markdown } from "./markdown";
 import { Button } from "./ui";
 import type { ChatController } from "./use-chat";
 
-export function ChatView({ chat, onBack, onOpenSettings }: { chat: ChatController; onBack: () => void; onOpenSettings: () => void }) {
+export function ChatView({ chat, subjectId, onBack, onOpenSettings }: { chat: ChatController; subjectId: string | null; onBack: () => void; onOpenSettings: () => void }) {
   const messages = useLiveQuery(
     () => (chat.conversationId ? db.messages.where("conversationId").equals(chat.conversationId).sortBy("createdAt") : []),
     [chat.conversationId],
   );
-  const conversations = useLiveQuery(() => db.conversations.toArray().then((a) => a.sort((x, y) => y.updatedAt - x.updatedAt)), []);
+  // Só as conversas desta disciplina (ou as gerais, fora de uma disciplina): cada uma é independente das demais.
+  const conversations = useLiveQuery(() => listConversations(subjectId), [subjectId]);
+  const subject = useLiveQuery(() => (subjectId ? db.subjects.get(subjectId).then((x) => x ?? null) : null), [subjectId]);
+  const scopeName = subjectId ? (subject?.name ?? "disciplina") : "geral";
   const endRef = useRef<HTMLDivElement>(null);
   useEffect(() => { endRef.current?.scrollIntoView({ block: "end" }); }, [messages?.length, chat.streamText]);
 
   // Entre gravar a resposta e encerrar o streaming há um instante em que ela existiria duas vezes na tela.
   const last = messages?.[messages.length - 1];
+  const streamHere = chat.streamConvId === chat.conversationId; // a resposta em andamento pertence a esta conversa?
   const alreadySaved = !!chat.streamText && last?.role === "assistant" && last.content === chat.streamText;
   const needsSetup = chat.error?.kind === "no_key" || chat.error?.kind === "no_model" || chat.error?.kind === "auth";
 
-  async function clearAll() {
-    if (!window.confirm("Apagar TODAS as conversas com a IA deste dispositivo? Esta ação não pode ser desfeita.")) return;
-    await clearAllConversations();
+  async function clearScope() {
+    const where = subjectId ? `da disciplina “${scopeName}”` : "gerais";
+    if (!window.confirm(`Apagar TODAS as conversas ${where}? As de outras disciplinas não são afetadas. Esta ação não pode ser desfeita.`)) return;
+    await clearConversations(subjectId);
+    chat.newConversation();
+  }
+
+  async function removeCurrent() {
+    if (!chat.conversationId || !window.confirm("Excluir esta conversa? Esta ação não pode ser desfeita.")) return;
+    await deleteConversation(chat.conversationId);
     chat.newConversation();
   }
 
@@ -40,12 +51,15 @@ export function ChatView({ chat, onBack, onOpenSettings }: { chat: ChatControlle
               <option value="">Conversas…</option>
               {conversations.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
             </select>
-            <Button variant="ghost" onClick={clearAll} disabled={chat.streaming}><Trash2 className="size-4" aria-hidden /> Limpar histórico</Button>
+            {chat.conversationId && <Button variant="ghost" onClick={removeCurrent} disabled={chat.streaming}><Trash2 className="size-4" aria-hidden /> Excluir conversa</Button>}
+            <Button variant="ghost" onClick={clearScope} disabled={chat.streaming}><Trash2 className="size-4" aria-hidden /> Limpar histórico</Button>
           </>
         )}
       </div>
 
-      {messages === undefined ? null : messages.length === 0 && !chat.streaming && !chat.streamText && !chat.error ? (
+      <p className="text-xs text-muted">Conversas {subjectId ? `de ${scopeName}` : "gerais"}</p>
+
+      {messages === undefined ? null : messages.length === 0 && !(streamHere && (chat.streaming || chat.streamText)) && !chat.error ? (
         <p className="rounded-xl border border-dashed border-line px-6 py-10 text-center text-sm text-muted">
           Faça uma pergunta abaixo. Use <strong className="text-fg">Contexto</strong> para escolher quais anotações a IA poderá ler — nada é enviado sem a sua seleção.
         </p>
@@ -61,7 +75,7 @@ export function ChatView({ chat, onBack, onOpenSettings }: { chat: ChatControlle
               </li>
             ),
           )}
-          {(chat.streamText ? !alreadySaved : chat.streaming) && (
+          {streamHere && (chat.streamText ? !alreadySaved : chat.streaming) && (
             <li className="rounded-2xl border border-line bg-surface px-4 py-3" aria-busy={chat.streaming}>
               {chat.streamText ? <Markdown>{chat.streamText}</Markdown> : <span className="text-sm text-muted">Pensando…</span>}
             </li>

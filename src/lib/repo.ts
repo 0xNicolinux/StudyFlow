@@ -1,4 +1,5 @@
 import { db } from "./db";
+import { leastUsedColor } from "./adaptive";
 import {
   BackupSchema,
   ConversationSchema,
@@ -23,11 +24,11 @@ export const SUBJECT_COLORS = ["#8b7cf6", "#5b9cf5", "#4fc1b0", "#e8b94f", "#e98
 /* ---------- Disciplinas ---------- */
 export async function createSubject(input: { name: string; color?: string; goals?: string }): Promise<Subject> {
   const now = Date.now();
-  const count = await db.subjects.count();
   const subject = SubjectSchema.parse({
     id: uid(),
     name: input.name,
-    color: input.color ?? SUBJECT_COLORS[count % SUBJECT_COLORS.length],
+    // Sem cor escolhida, usa a menos repetida entre as disciplinas existentes (em vez de girar pela contagem).
+    color: input.color ?? leastUsedColor(SUBJECT_COLORS, (await db.subjects.toArray()).map((x) => x.color)),
     goals: input.goals ?? "",
     createdAt: now,
     updatedAt: now,
@@ -139,10 +140,25 @@ export async function addMessage(conversationId: string, role: Message["role"], 
   return m;
 }
 
-export async function clearAllConversations() {
+/** Conversas de uma disciplina (ou as gerais, com `null`), da mais recente para a mais antiga. */
+export async function listConversations(subjectId: string | null): Promise<Conversation[]> {
+  const all = await db.conversations.filter((c) => c.subjectId === subjectId).toArray();
+  return all.sort((a, b) => b.updatedAt - a.updatedAt);
+}
+
+export async function deleteConversation(id: string) {
   await db.transaction("rw", db.messages, db.conversations, async () => {
-    await db.messages.clear();
-    await db.conversations.clear();
+    await db.messages.where("conversationId").equals(id).delete();
+    await db.conversations.delete(id);
+  });
+}
+
+/** Apaga só as conversas de uma disciplina (ou as gerais), sem tocar nas demais. */
+export async function clearConversations(subjectId: string | null) {
+  await db.transaction("rw", db.messages, db.conversations, async () => {
+    const ids = await db.conversations.filter((c) => c.subjectId === subjectId).primaryKeys();
+    await db.messages.where("conversationId").anyOf(ids).delete();
+    await db.conversations.bulkDelete(ids);
   });
 }
 

@@ -15,7 +15,11 @@ export type Pending = { text: string; items: ContextItem[]; dropped: number; hos
 const hostOf = (u: string) => { try { return new URL(u).host; } catch { return u; } };
 
 export function useChat(activeSubjectId: string | null) {
-  const [conversationId, setConversationId] = useState<string | null>(null);
+  // Cada disciplina (e a área geral, chave "") lembra a própria conversa aberta: trocar de disciplina não mistura históricos.
+  const scopeKey = activeSubjectId ?? "";
+  const [openByScope, setOpenByScope] = useState<Record<string, string | null>>({});
+  const conversationId = openByScope[scopeKey] ?? null;
+  const [streamConvId, setStreamConvId] = useState<string | null>(null);
   const [streaming, setStreaming] = useState(false);
   const [streamText, setStreamText] = useState("");
   const [error, setError] = useState<AiError | null>(null);
@@ -34,7 +38,7 @@ export function useChat(activeSubjectId: string | null) {
 
   /** Executa a chamada real. `persistUser=false` reaproveita a última mensagem do usuário (retry). */
   const run = useCallback(async (convId: string, text: string, items: ContextItem[], persistUser: boolean) => {
-    setError(null); setStreamText(""); setStreaming(true);
+    setError(null); setStreamText(""); setStreamConvId(convId); setStreaming(true);
     const ctrl = new AbortController();
     abortRef.current = ctrl;
     let acc = "";
@@ -65,10 +69,11 @@ export function useChat(activeSubjectId: string | null) {
     let convId = conversationId;
     if (!convId) {
       convId = (await createConversation(text, activeSubjectId)).id;
-      setConversationId(convId);
+      const created = convId;
+      setOpenByScope((o) => ({ ...o, [scopeKey]: created }));
     }
     await run(convId, text, items, true);
-  }, [conversationId, activeSubjectId, run]);
+  }, [conversationId, activeSubjectId, scopeKey, run]);
 
   /** Retorna "started" se a mensagem seguiu (ou aguarda confirmação) e "blocked" se faltou configuração. */
   const send = useCallback(async (text: string): Promise<"started" | "blocked"> => {
@@ -110,14 +115,16 @@ export function useChat(activeSubjectId: string | null) {
   }, [conversationId, streaming, run, collectItems]);
 
   return {
-    conversationId, setConversationId: (id: string | null) => { setStreamText(""); setConversationId(id); }, streaming, streamText, error, clearError: () => setError(null),
+    conversationId, streamConvId,
+    setConversationId: (id: string | null) => { setStreamText(""); setOpenByScope((o) => ({ ...o, [scopeKey]: id })); },
+    streaming, streamText, error, clearError: () => setError(null),
     pending, cancelPending: () => setPending(null), confirmPending,
     selection, setSelection,
     toggleDoc: (id: string) => setSelection((s) => ({ ...s, docIds: s.docIds.includes(id) ? s.docIds.filter((x) => x !== id) : [...s.docIds, id] })),
     addExcerpt: (label: string, text: string) => setSelection((s) => ({ ...s, excerpts: [...s.excerpts, { id: crypto.randomUUID(), label, text }] })),
     removeExcerpt: (id: string) => setSelection((s) => ({ ...s, excerpts: s.excerpts.filter((x) => x.id !== id) })),
     send, retry, stop: () => abortRef.current?.abort(),
-    newConversation: () => { setStreamText(""); setConversationId(null); setError(null); setSelection(EMPTY_SELECTION); },
+    newConversation: () => { setStreamText(""); setOpenByScope((o) => ({ ...o, [scopeKey]: null })); setError(null); setSelection(EMPTY_SELECTION); },
   };
 }
 export type ChatController = ReturnType<typeof useChat>;

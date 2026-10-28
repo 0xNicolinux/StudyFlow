@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { exportBackup, importBackup, saveProfile } from "@/lib/repo";
 import { Button, Field, Input } from "./ui";
 import { AiSection } from "./ai-section";
+import { resetAdaptive } from "./use-adaptive";
 
 const MAX_PHOTO = 400 * 1024;
 
@@ -14,6 +15,7 @@ export function SettingsPanel() {
   return (
     <div className="fade-in max-w-xl space-y-8">
       {profile !== undefined && <ProfileForm key={profile?.name ?? "none"} initialName={profile?.name ?? ""} initialPhoto={profile?.photo ?? null} />}
+      <PersonalizationSection />
       <BackupSection />
       <AiSection />
     </div>
@@ -112,6 +114,22 @@ function BackupSection() {
         <input ref={fileRef} type="file" accept="application/json,.json" className="hidden" onChange={(e) => doImport(e.target.files?.[0])} aria-label="Arquivo de backup" />
       </div>
       {msg && <p role="status" className={msg.ok ? "text-sm text-success" : "text-sm text-danger"}>{msg.text}</p>}
+    </section>
+  );
+}
+
+function PersonalizationSection() {
+  const [done, setDone] = useState(false);
+  return (
+    <section className="space-y-3">
+      <h2 className="text-sm font-semibold">Personalização</h2>
+      <p className="text-sm text-muted">
+        O StudyFlow reordena painéis e sugere próximos passos conforme o que você usa. Esse histórico de uso fica só neste dispositivo, não entra no backup e não é enviado a lugar nenhum.
+      </p>
+      <div className="flex items-center gap-3">
+        <Button onClick={() => { resetAdaptive(); setDone(true); }}>Redefinir personalização</Button>
+        {done && <span role="status" className="text-sm text-success">Histórico de uso apagado.</span>}
+      </div>
     </section>
   );
 }

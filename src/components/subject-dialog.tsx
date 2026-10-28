@@ -1,6 +1,9 @@
 "use client";
 import { useState } from "react";
+import { useLiveQuery } from "dexie-react-hooks";
 import { Button, Field, Input, Modal } from "./ui";
+import { db } from "@/lib/db";
+import { leastUsedColor } from "@/lib/adaptive";
 import { SUBJECT_COLORS, createSubject, updateSubject } from "@/lib/repo";
 import { cn } from "@/lib/cn";
 import type { Subject } from "@/lib/schemas";
@@ -18,7 +21,10 @@ export function SubjectDialog({ open, subject, onClose, onSaved }: Props) {
 
 function SubjectForm({ subject, onClose, onSaved }: Omit<Props, "open">) {
   const [name, setName] = useState(subject?.name ?? "");
-  const [color, setColor] = useState(subject?.color ?? SUBJECT_COLORS[0]);
+  // Em disciplina nova, a cor sugerida é a menos usada pelas outras; escolher manualmente prevalece.
+  const suggested = useLiveQuery(() => db.subjects.toArray().then((a) => leastUsedColor(SUBJECT_COLORS, a.map((x) => x.color))), []);
+  const [picked, setPicked] = useState<string | null>(subject?.color ?? null);
+  const color = picked ?? suggested ?? SUBJECT_COLORS[0];
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -51,7 +57,7 @@ function SubjectForm({ subject, onClose, onSaved }: Omit<Props, "open">) {
               type="button"
               aria-label={`Cor ${c}`}
               aria-pressed={color === c}
-              onClick={() => setColor(c)}
+              onClick={() => setPicked(c)}
               className={cn("size-7 rounded-full border-2 transition", color === c ? "border-fg" : "border-transparent")}
               style={{ background: c }}
             />

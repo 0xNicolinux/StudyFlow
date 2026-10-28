@@ -3,6 +3,11 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { IDBFactory } from "fake-indexeddb";
 import { StudyFlowDB, db, __setDb } from "./db";
 import {
+  addMessage,
+  clearConversations,
+  createConversation,
+  deleteConversation,
+  listConversations,
   createNote,
   createSubject,
   createTask,
@@ -90,5 +95,59 @@ describe("backup", () => {
   it("rejeita versão desconhecida", async () => {
     const r = await importBackup(JSON.stringify({ app: "studyflow", version: 99, exportedAt: 1, data: {} }));
     expect(r.ok).toBe(false);
+  });
+});
+
+describe("conversas por disciplina", () => {
+  it("cada disciplina lista só as próprias conversas; as gerais ficam à parte", async () => {
+    const a = await createSubject({ name: "A" });
+    const b = await createSubject({ name: "B" });
+    const ca1 = await createConversation("a1", a.id);
+    await createConversation("a2", a.id);
+    await createConversation("b1", b.id);
+    await createConversation("geral", null);
+    expect((await listConversations(a.id)).map((c) => c.title).sort()).toEqual(["a1", "a2"]);
+    expect((await listConversations(b.id)).map((c) => c.title)).toEqual(["b1"]);
+    expect((await listConversations(null)).map((c) => c.title)).toEqual(["geral"]);
+    expect(ca1.subjectId).toBe(a.id);
+  });
+
+  it("a mais recente vem primeiro", async () => {
+    const s = await createSubject({ name: "A" });
+    const old = await createConversation("antiga", s.id);
+    const recent = await createConversation("recente", s.id);
+    await addMessage(old.id, "user", "oi"); // atualiza a antiga: agora ela é a mais recente
+    expect((await listConversations(s.id)).map((c) => c.id)).toEqual([old.id, recent.id]);
+  });
+
+  it("excluir uma conversa apaga as mensagens dela e preserva as demais", async () => {
+    const s = await createSubject({ name: "A" });
+    const c1 = await createConversation("c1", s.id);
+    const c2 = await createConversation("c2", s.id);
+    await addMessage(c1.id, "user", "x"); await addMessage(c2.id, "user", "y");
+    await deleteConversation(c1.id);
+    expect((await db.messages.toArray()).map((m) => m.content)).toEqual(["y"]);
+    expect((await listConversations(s.id)).map((c) => c.id)).toEqual([c2.id]);
+  });
+
+  it("limpar o histórico de uma disciplina não toca nas outras nem nas gerais", async () => {
+    const a = await createSubject({ name: "A" });
+    const b = await createSubject({ name: "B" });
+    const ca = await createConversation("a", a.id);
+    const cb = await createConversation("b", b.id);
+    const cg = await createConversation("g", null);
+    for (const c of [ca, cb, cg]) await addMessage(c.id, "user", c.title);
+    await clearConversations(a.id);
+    expect((await db.conversations.toArray()).map((c) => c.title).sort()).toEqual(["b", "g"]);
+    expect((await db.messages.toArray()).map((m) => m.content).sort()).toEqual(["b", "g"]);
+  });
+});
+
+describe("cor padrão da disciplina", () => {
+  it("usa a cor menos repetida, mesmo depois de excluir disciplinas", async () => {
+    const [a, b] = [await createSubject({ name: "A" }), await createSubject({ name: "B" })];
+    await deleteSubject(a.id);
+    const c = await createSubject({ name: "C" });
+    expect(new Set([b.color, c.color]).size).toBe(2);
   });
 });
