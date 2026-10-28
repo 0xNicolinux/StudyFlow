@@ -510,7 +510,14 @@ button, a { touch-action: manipulation; }
 }
 .app-sidebar .sidebar-profile-row { min-width: 0; }
 .app-sidebar .sidebar-subject-item > button > span:first-child {
-  flex: 0 0 28px;
+  flex: 0 0 20px;
+}
+.app-sidebar .sidebar-subject-item > button {
+  min-height: 30px;
+}
+.app-sidebar .sidebar-subject-item > button > span:nth-child(2) {
+  font-size: 13px;
+  line-height: 1.35;
 }
 
 /* Centered landing: headline and CTA align to the viewport, while ASCII remains full bleed. */
