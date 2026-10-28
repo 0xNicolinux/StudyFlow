@@ -3,18 +3,18 @@
 /* Dark-first: os tokens escuros são os valores reais do tema. */
 :root {
   color-scheme: dark;
-  --bg: #0b0e14;
-  --surface: #111722;
-  --surface-2: #171f2c;
-  --surface-3: #202b3b;
-  --border: #2a3548;
-  --fg: #edf2fb;
-  --fg-muted: #96a3b8;
-  --accent: #a78bfa;
-  --accent-fg: #171126;
-  --danger: #fb7185;
-  --success: #4adea4;
-  --warning: #fbbf24;
+  --bg: #191b20;
+  --surface: #1d1f25;
+  --surface-2: #252830;
+  --surface-3: #2e323c;
+  --border: #343845;
+  --fg: #ececf1;
+  --fg-muted: #a0a3b1;
+  --accent: #8b7cf6;
+  --accent-fg: #14121f;
+  --danger: #f0716f;
+  --success: #5fcf9b;
+  --warning: #e8b94f;
 }
 
 @theme inline {
@@ -170,6 +170,22 @@ div,main,aside{scrollbar-width:thin;scrollbar-color:#364158 transparent}
 .suggestions-panel { border-color: var(--border); border-radius: .85rem; background: var(--surface); }
 .modal-panel { background: var(--surface); }
 .sidebar-profile { background: var(--surface-2); }
+
+
+/* Sidebar compacta: visual neutro e navegação previsível. */
+.sidebar-profile-row { min-height: 2.5rem; }
+.sidebar-profile { min-height: 2.25rem; border: 0; border-radius: .5rem; padding: 0; background: transparent; }
+.sidebar-profile:hover { background: var(--surface-2); }
+.sidebar-nav-item { min-height: 2.25rem; padding-block: .45rem; border-color: transparent; border-radius: .5rem; color: #a2a5af; font-weight: 450; }
+.sidebar-nav-item:hover { color: var(--fg); background: #25272d; border-color: transparent; }
+.sidebar-nav-item[aria-current="page"] { color: #c1b5ff; background: #302d43; border-color: transparent; box-shadow: none; }
+.sidebar-nav-item[aria-current="page"]::before { display: none; }
+.sidebar-section-label { color: #a0a3b1; font-size: .7rem; font-weight: 500; letter-spacing: 0; text-transform: uppercase; }
+.sidebar-subject-item { border-color: transparent; border-radius: .5rem; }
+.sidebar-subject-item:hover { border-color: transparent; background: #25272d; }
+.sidebar-subject-item.is-active { border-color: transparent; background: #302d43; }
+.sidebar-footer { background: transparent; }
+.sidebar-footer .sidebar-nav-item[aria-current="page"] { color: #c1b5ff; background: #302d43; }
 
 /* Markdown das respostas da IA e das anotações */
 .md { font-size: 0.875rem; line-height: 1.65; overflow-wrap: anywhere; }
