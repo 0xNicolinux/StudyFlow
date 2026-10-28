@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, ArrowUpRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { AsciiOcean } from "@/lib/ascii-sharks/react";
 
 export function LandingPage() {
@@ -23,19 +23,9 @@ export function LandingPage() {
           <span className="landing-brand-mark">SF</span>
           <span>StudyFlow</span>
         </Link>
-        <span className="landing-nav-meta">
-          <span className="landing-status-dot" aria-hidden="true" />
-          SEU AMBIENTE. SEU RITMO.
-        </span>
       </header>
 
       <section className="landing-copy landing-copy-overlay" aria-labelledby="landing-title">
-        <div className="landing-eyebrow">
-          <span>STUDY SYSTEM</span>
-          <span className="landing-eyebrow-rule" aria-hidden="true" />
-          <span>001 / FOCUS</span>
-        </div>
-
         <h1 id="landing-title" className="landing-title">
           StudyFlow<span aria-hidden="true">.</span>
         </h1>
@@ -58,18 +48,6 @@ export function LandingPage() {
         </div>
       </section>
 
-      <div className="landing-side-note" aria-hidden="true">
-        <span>ASCII OCEAN</span>
-        <span className="landing-side-note-line" />
-        <span>KEEP MOVING</span>
-      </div>
-
-      <footer className="landing-footer landing-footer-overlay">
-        <span>FOCO NO QUE IMPORTA.</span>
-        <Link href="https://github.com/stackedlol/ascii-sharks" target="_blank" rel="noreferrer" className="landing-credit">
-          ASCII SHARKS BY STACKEDLOL <ArrowUpRight size={12} aria-hidden="true" />
-        </Link>
-      </footer>
     </main>
   );
 }
