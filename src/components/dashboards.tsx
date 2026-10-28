@@ -1,6 +1,6 @@
 "use client";
 import { useLiveQuery } from "dexie-react-hooks";
-import { ArrowRight, BookOpenCheck, CalendarDays, GraduationCap, Sparkles, Timer } from "lucide-react";
+import { ArrowRight, BookOpenCheck, CalendarDays, GraduationCap, Timer } from "lucide-react";
 import { db } from "@/lib/db";
 import { formatDay, isOverdue } from "@/lib/format";
 import { cn } from "@/lib/cn";
@@ -64,9 +64,9 @@ export function HomeDashboard({ onNavigate, onNewSubject }: { onNavigate: (v: Vi
   const hero = (
     <section className="dashboard-hero">
       <div className="min-w-0">
-        <span className="dashboard-eyebrow"><Sparkles className="size-3.5" aria-hidden /> Seu progresso, no seu ritmo</span>
-        <h2>Um passo de cada vez. Grandes conquistas vêm daí.</h2>
-        <p>Organize suas disciplinas, acompanhe sua evolução e transforme o tempo de estudo em progresso real — tudo no seu dispositivo.</p>
+        <span className="dashboard-eyebrow">PAINEL DE ESTUDOS</span>
+        <h2>Organize seus estudos.</h2>
+        <p>Acompanhe tarefas, revisões e materiais por disciplina. Seus dados ficam neste dispositivo.</p>
         <div className="dashboard-hero-actions">
           <button onClick={onNewSubject} className="dashboard-hero-primary"><BookOpenCheck className="size-4" aria-hidden /> Nova disciplina <ArrowRight className="size-4" aria-hidden /></button>
           <button onClick={() => onNavigate({ kind: "focus" })} className="dashboard-hero-secondary"><Timer className="size-4" aria-hidden /> Começar foco</button>
