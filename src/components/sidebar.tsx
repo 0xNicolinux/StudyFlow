@@ -111,7 +111,10 @@ export function Sidebar({ view, onNavigate, onNewSubject, onEditSubject, onDelet
                 className={cn("flex min-w-0 flex-1 items-center gap-3 px-3 py-2 text-left text-sm", collapsed && "justify-center px-0")}
               >
                 <span className="flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-md text-xs font-semibold" style={{ background: s.color, color: readableOn(s.color) }} aria-hidden>
-                  {s.icon?.startsWith("data:image/") ? <img src={s.icon} alt="" className="size-full object-cover" /> : s.icon ? s.icon : s.name.trim().slice(0, 1).toLocaleUpperCase("pt-BR")}
+                  {s.icon?.startsWith("data:image/") ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={s.icon} alt="" className="size-full object-cover" />
+                  ) : s.icon ? s.icon : s.name.trim().slice(0, 1).toLocaleUpperCase("pt-BR")}
                 </span>
                 <span className={cn(fade(collapsed), active ? "text-fg" : "text-muted group-hover:text-fg", collapsed && "w-0")}>{s.name}</span>
               </button>
