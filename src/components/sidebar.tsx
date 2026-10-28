@@ -57,16 +57,16 @@ export function Sidebar({ view, onNavigate, onNewSubject, onEditSubject, onDelet
   return (
     <div className="flex h-full w-full flex-col bg-surface">
       <div className="sidebar-brand">
-        <span className="sidebar-brand-mark" aria-hidden><BookOpenCheck className="size-[1.2rem]" strokeWidth={2.2} /></span>
-        <span className={cn("sidebar-brand-copy", collapsed && "opacity-0")}>
-          <span className="sidebar-brand-name">StudyFlow</span>
-          <span className="sidebar-brand-tagline">SEU ESPAÇO DE ESTUDOS</span>
-        </span>
         {pin && (
           <IconButton label="Fixar barra lateral" aria-pressed={pin.pinned} onClick={pin.onToggle} className={cn(pin.pinned && "bg-accent/15 text-accent hover:bg-accent/25")}>
             <Pin className={cn("size-4 transition-transform", pin.pinned ? "fill-current" : "rotate-45")} aria-hidden />
           </IconButton>
         )}
+        <span className="sidebar-brand-mark" aria-hidden><BookOpenCheck className="size-[1.2rem]" strokeWidth={2.2} /></span>
+        <span className={cn("sidebar-brand-copy", collapsed && "opacity-0")}>
+          <span className="sidebar-brand-name">StudyFlow</span>
+          <span className="sidebar-brand-tagline">SEU ESPAÇO DE ESTUDOS</span>
+        </span>
       </div>
 
       <button
