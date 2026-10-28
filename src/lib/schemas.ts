@@ -32,7 +32,7 @@ export const NoteSchema = z.object({
 export const ProfileSchema = z.object({
   id: z.literal("me"),
   name: z.string().trim().min(1).max(60),
-  photo: z.string().max(1_200_000).nullable(),
+  photo: z.string().max(4_200_000).nullable(),
   cover: z.string().max(4_200_000).nullable().optional(),
   institution: z.string().trim().max(120).optional(),
   educationLevel: z.enum(["fundamental", "medio", "tecnico", "superior", "pos", "outro"]).optional(),
