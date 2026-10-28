@@ -3,7 +3,7 @@
 /* Tokens do produto: carvão neutro, contraste legível e um único acento. */
 :root {
   color-scheme: dark;
-  --bg: #030303;
+  --bg: #000000;
   --surface: #090909;
   --surface-2: #111111;
   --surface-3: #1b1b1b;
@@ -131,7 +131,7 @@ button, a { touch-action: manipulation; }
 
 /* Landing: identidade tipográfica, preto absoluto e um único ponto frio de cor. */
 .landing-page {
-  --landing-bg: #030303;
+  --landing-bg: #000000;
   --landing-fg: #f2f2f2;
   --landing-muted: #858585;
   --landing-rule: #1a1a1a;
@@ -301,7 +301,7 @@ button, a { touch-action: manipulation; }
   height: 100%;
   min-height: 0;
   flex: 1 1 auto;
-  background: #030303;
+  background: #000000;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 .landing-art-baseline { padding-top: 12px; border-top: 1px solid #151515; }
