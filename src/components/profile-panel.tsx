@@ -6,7 +6,6 @@ import { ImagePlus, Paperclip, Pencil, SendHorizontal, Trash2, X } from "lucide-
 import { db } from "@/lib/db";
 import { createProfilePost, deleteProfilePost, saveProfile } from "@/lib/repo";
 import type { Profile, ProfilePost } from "@/lib/schemas";
-import { initials } from "@/lib/format";
 import { Button } from "./ui";
 import { AvatarMedia } from "./avatar-media";
 
