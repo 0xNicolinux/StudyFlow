@@ -1,6 +1,6 @@
 "use client";
 import { useLiveQuery } from "dexie-react-hooks";
-import { ArrowRight, BookOpenCheck, CalendarDays, GraduationCap, Timer } from "lucide-react";
+import { BookOpenCheck, CalendarDays, GraduationCap, Timer } from "lucide-react";
 import { db } from "@/lib/db";
 import { formatDay, isOverdue } from "@/lib/format";
 import { cn } from "@/lib/cn";
@@ -64,16 +64,13 @@ export function HomeDashboard({ onNavigate, onNewSubject }: { onNavigate: (v: Vi
   const hero = (
     <section className="dashboard-hero">
       <div className="min-w-0">
-        <span className="dashboard-eyebrow">PAINEL DE ESTUDOS</span>
-        <h2>Organize seus estudos.</h2>
-        <p>Acompanhe tarefas, revisões e materiais por disciplina. Seus dados ficam neste dispositivo.</p>
-        <div className="dashboard-hero-actions">
-          <button onClick={onNewSubject} className="dashboard-hero-primary"><BookOpenCheck className="size-4" aria-hidden /> Nova disciplina <ArrowRight className="size-4" aria-hidden /></button>
-          <button onClick={() => onNavigate({ kind: "focus" })} className="dashboard-hero-secondary"><Timer className="size-4" aria-hidden /> Começar foco</button>
-        </div>
+        <p className="dashboard-eyebrow">VISÃO GERAL</p>
+        <h2>Seu estudo</h2>
+        <p>Disciplinas, tarefas e revisões em um só lugar.</p>
       </div>
-      <div className="dashboard-hero-aside" aria-label={`${open.length} tarefas em aberto`}>
-        <div className="dashboard-hero-note"><strong>{open.length}</strong><span>{open.length === 1 ? "tarefa em aberto" : "tarefas em aberto"}</span></div>
+      <div className="dashboard-hero-actions">
+        <button onClick={onNewSubject} className="dashboard-hero-primary"><BookOpenCheck className="size-4" aria-hidden /> Nova disciplina</button>
+        <button onClick={() => onNavigate({ kind: "focus" })} className="dashboard-hero-secondary"><Timer className="size-4" aria-hidden /> Iniciar foco</button>
       </div>
     </section>
   );
