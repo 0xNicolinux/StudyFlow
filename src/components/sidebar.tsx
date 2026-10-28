@@ -89,12 +89,14 @@ export function Sidebar({ view, onNavigate, onNewSubject, onEditSubject, onDelet
       </nav>
 
       <div className="h-3 shrink-0" />
-      <div className={cn("mt-2 flex items-center justify-between px-5 transition-opacity", collapsed && "opacity-0")}>
-        <h2 className="sidebar-section-label">Disciplinas</h2>
-        <IconButton label="Nova disciplina" onClick={onNewSubject}><Plus className="size-4" /></IconButton>
-      </div>
+      {!collapsed && (
+        <div className="mt-2 flex items-center justify-between px-3">
+          <h2 className="sidebar-section-label">Disciplinas</h2>
+          <IconButton label="Nova disciplina" onClick={onNewSubject}><Plus className="size-4" /></IconButton>
+        </div>
+      )}
 
-      <div className="mt-1 min-h-0 flex-1 space-y-0.5 overflow-y-auto px-2 pb-3">
+      <div className={cn("mt-1 min-h-0 space-y-0.5 overflow-y-auto px-2 pb-2", collapsed ? "max-h-[42%] flex-none" : "flex-1")}>
         {subjects === undefined && <div className="h-9 animate-pulse rounded-lg bg-surface-2" />}
         {subjects?.length === 0 && (
           <p className={cn("px-3 py-3 text-sm text-muted transition-opacity", collapsed && "opacity-0")}>Nenhuma disciplina ainda. Use o botão + para criar a primeira.</p>
@@ -122,13 +124,19 @@ export function Sidebar({ view, onNavigate, onNewSubject, onEditSubject, onDelet
         })}
       </div>
 
-      <div className="sidebar-footer border-t border-line p-2">
+      {collapsed && (
+        <div className="flex justify-center px-2 pb-2">
+          <IconButton label="Nova disciplina" onClick={onNewSubject}><Plus className="size-4" /></IconButton>
+        </div>
+      )}
+
+      <div className="sidebar-footer mt-auto border-t border-line p-2">
         <button
           onClick={() => onNavigate({ kind: "settings" })}
           aria-current={view.kind === "settings" ? "page" : undefined}
-          className={cn(ROW, "sidebar-nav-item", view.kind === "settings" ? "text-fg" : "")}
+          className={cn(ROW, "sidebar-nav-item", view.kind === "settings" ? "text-fg" : "", collapsed && "justify-center px-0")}
         >
-          <Settings className="size-4 shrink-0" aria-hidden /> <span className={fade(collapsed)}>Configurações</span>
+          <Settings className="size-4 shrink-0" aria-hidden /> <span className={cn(fade(collapsed), collapsed && "w-0")}>Configurações</span>
         </button>
       </div>
     </div>
