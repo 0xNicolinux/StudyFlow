@@ -8,8 +8,9 @@ import { createProfilePost, deleteProfilePost, saveProfile } from "@/lib/repo";
 import type { Profile, ProfilePost } from "@/lib/schemas";
 import { initials } from "@/lib/format";
 import { Button } from "./ui";
+import { AvatarMedia } from "./avatar-media";
 
-const MAX_AVATAR = 400 * 1024;
+const MAX_AVATAR = 2.8 * 1024 * 1024;
 const MAX_COVER = 3 * 1024 * 1024;
 const MAX_POST_MEDIA = 2.8 * 1024 * 1024;
 
@@ -126,11 +127,8 @@ export function ProfilePanel() {
         </div>
 
         <div className="profile-identity">
-          <div className="profile-avatar">
-            {person?.photo ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={person.photo} alt={`Foto de ${name}`} />
-            ) : <span>{initials(name)}</span>}
+          <div className="profile-avatar" role="img" aria-label={`Avatar de ${name}`}>
+            <AvatarMedia media={person?.photo} name={name} className="profile-avatar-content" />
           </div>
           <div className="profile-identity-main">
             <div className="profile-name-row">
@@ -163,7 +161,7 @@ export function ProfilePanel() {
         </div>
 
         <form className="profile-composer" onSubmit={submitPost}>
-          <div className="profile-composer-avatar" aria-hidden>{initials(name)}</div>
+          <div className="profile-composer-avatar" aria-hidden><AvatarMedia media={person?.photo} name={name} className="profile-avatar-content" /></div>
           <div className="min-w-0 flex-1 space-y-3">
             <textarea
               value={postText}
@@ -208,7 +206,7 @@ export function ProfilePanel() {
         ) : posts.map((post) => (
           <article key={post.id} className="profile-post">
             <div className="profile-post-top">
-              <div className="profile-composer-avatar">{initials(name)}</div>
+              <div className="profile-composer-avatar" role="img" aria-label={`Avatar de ${name}`}><AvatarMedia media={person?.photo} name={name} className="profile-avatar-content" /></div>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium">{name}</p>
                 <p className="text-xs text-muted">{formatDate(post.createdAt)} · {roleLabel}</p>
@@ -249,13 +247,13 @@ function ProfileEditor({ profile, onSaved }: { profile: Profile | null | undefin
 
   async function readImage(file: File | undefined, kind: "photo" | "cover") {
     if (!file) return;
-    if (!(file.type.startsWith("image/") || (kind === "cover" && ["video/mp4", "video/webm"].includes(file.type)))) {
-      setError(kind === "cover" ? "Use uma imagem, GIF ou vídeo MP4/WebM para a capa." : "A foto precisa ser uma imagem.");
+    if (!(file.type.startsWith("image/") || ["video/mp4", "video/webm"].includes(file.type))) {
+      setError(kind === "cover" ? "Use uma imagem, GIF ou vídeo MP4/WebM para a capa." : "Use uma imagem, GIF ou vídeo MP4/WebM para o avatar.");
       return;
     }
     const max = kind === "photo" ? MAX_AVATAR : MAX_COVER;
     if (file.size > max) {
-      setError(kind === "photo" ? "A foto precisa ter até 400 KB." : "A capa precisa ter até 3 MB.");
+      setError(kind === "photo" ? "A foto ou vídeo de perfil precisa ter até 2,8 MB." : "A capa precisa ter até 3 MB.");
       return;
     }
     try {
@@ -290,19 +288,16 @@ function ProfileEditor({ profile, onSaved }: { profile: Profile | null | undefin
       <div className="profile-editor-heading"><div><h3>Editar informações</h3><p>Defina como seu perfil aparece no StudyFlow.</p></div></div>
       <div className="profile-upload-row">
         <div className="profile-upload-preview">
-          {photo ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={photo} alt="" />
-          ) : <span>{initials(name || "Estudante")}</span>}
+          <AvatarMedia media={photo} name={name || "Estudante"} className="profile-avatar-content" />
         </div>
         <div className="profile-upload-actions">
-          <span className="text-sm font-medium">Foto de perfil</span>
-          <span className="text-xs text-muted">Imagem de até 400 KB</span>
+          <span className="text-sm font-medium">Foto ou vídeo de perfil</span>
+          <span className="text-xs text-muted">Imagem/GIF ou vídeo MP4/WebM, até 2,8 MB</span>
           <div className="flex flex-wrap gap-2">
             <Button type="button" onClick={() => avatarInput.current?.click()}>Escolher foto</Button>
             {photo && <Button type="button" variant="ghost" onClick={() => setPhoto(null)}>Remover</Button>}
           </div>
-          <input ref={avatarInput} className="hidden" type="file" accept="image/*" onChange={(e) => void readImage(e.target.files?.[0], "photo")} />
+          <input ref={avatarInput} className="hidden" type="file" accept="image/*,video/mp4,video/webm" onChange={(e) => void readImage(e.target.files?.[0], "photo") />
         </div>
       </div>
       <div className="space-y-2">
