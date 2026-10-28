@@ -10,8 +10,6 @@ import { resetAdaptive } from "./use-adaptive";
 import { ACCENT_OPTIONS, themeStore } from "@/lib/theme-pref";
 import { useLocalStore } from "./use-local-store";
 
-const MAX_PHOTO = 400 * 1024;
-
 export function SettingsPanel() {
   return (
     <div className="settings-page fade-in w-full max-w-3xl space-y-9">
