@@ -172,7 +172,7 @@ button, a { touch-action: manipulation; }
   border: 1px solid #333;
   border-radius: 4px;
   color: #f2f2f2;
-  font-family: var(--font-mono);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: .65rem;
   font-weight: 600;
   letter-spacing: -.08em;
@@ -182,7 +182,7 @@ button, a { touch-action: manipulation; }
   align-items: center;
   gap: .6rem;
   color: #777;
-  font-family: var(--font-mono);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: .6rem;
   letter-spacing: .1em;
   white-space: nowrap;
@@ -209,7 +209,7 @@ button, a { touch-action: manipulation; }
   gap: 13px;
   margin-bottom: clamp(24px, 4.5vh, 42px);
   color: #858585;
-  font-family: var(--font-mono);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: .62rem;
   letter-spacing: .12em;
 }
@@ -268,7 +268,7 @@ button, a { touch-action: manipulation; }
   gap: 10px;
   margin-top: 18px;
   color: #656565;
-  font-family: var(--font-mono);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: .59rem;
   letter-spacing: .07em;
 }
@@ -290,7 +290,7 @@ button, a { touch-action: manipulation; }
   justify-content: space-between;
   gap: 1rem;
   color: #5d5d5d;
-  font-family: var(--font-mono);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: .57rem;
   letter-spacing: .1em;
 }
@@ -302,7 +302,7 @@ button, a { touch-action: manipulation; }
   min-height: 0;
   flex: 1 1 auto;
   background: #030303;
-  font-family: var(--font-mono);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 .landing-art-baseline { padding-top: 12px; border-top: 1px solid #151515; }
 .landing-footer {
@@ -314,7 +314,7 @@ button, a { touch-action: manipulation; }
   gap: 1rem;
   border-top: 1px solid var(--landing-rule);
   color: #626262;
-  font-family: var(--font-mono);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: .58rem;
   letter-spacing: .09em;
 }
@@ -356,7 +356,7 @@ button, a { touch-action: manipulation; }
 .md ol { list-style: decimal; padding-left: 1.25rem; }
 .md a { color: var(--accent); text-decoration: underline; }
 .md blockquote { padding-left: .75rem; border-left: 3px solid var(--border); color: var(--fg-muted); }
-.md code { padding: .1em .35em; border-radius: .3rem; background: var(--surface-3); font-family: var(--font-mono); font-size: .85em; }
+.md code { padding: .1em .35em; border-radius: .3rem; background: var(--surface-3); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .85em; }
 .md pre { overflow-x: auto; padding: .75rem; border: 1px solid var(--border); border-radius: .6rem; background: var(--bg); }
 .md pre code { padding: 0; background: none; }
 .md table { display: block; overflow-x: auto; border-collapse: collapse; }
