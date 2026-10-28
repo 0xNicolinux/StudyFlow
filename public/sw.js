@@ -38,7 +38,9 @@ self.addEventListener("fetch", (e) => {
       }).catch(async () => {
         // Cada rota tem seu próprio documento offline: /study nunca deve virar a landing page.
         const cachedRoute = await caches.match(req);
-        return cachedRoute ?? (await caches.match("/"));
+        if (cachedRoute) return cachedRoute;
+        const fallbackPath = new URL(req.url).pathname === "/study" ? "/study" : "/";
+        return await caches.match(fallbackPath);
       }),
     );
     return;
