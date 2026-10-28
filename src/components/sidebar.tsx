@@ -25,12 +25,13 @@ type Props = {
 };
 
 // Ordem fixa para preservar a memória muscular: a navegação não muda sozinha.
+// Ordem baseada no fluxo diário: visão geral → execução → estudo ativo → consulta.
 const PANEL_NAV = [
-  { kind: "quizzes", label: "Quizzes", icon: BookOpenCheck },
-  { kind: "notes", label: "Anotações", icon: NotebookPen },
   { kind: "tasks", label: "Tarefas", icon: ListChecks },
   { kind: "focus", label: "Foco", icon: Timer },
   { kind: "flashcards", label: "Flashcards", icon: Brain },
+  { kind: "quizzes", label: "Quizzes", icon: BookOpenCheck },
+  { kind: "notes", label: "Anotações", icon: NotebookPen },
   { kind: "library", label: "Biblioteca", icon: Library },
 ] as const;
 
@@ -108,7 +109,7 @@ export function Sidebar({ view, onNavigate, onNewSubject, onEditSubject, onDelet
               <button
                 onClick={() => onNavigate({ kind: "subject", id: s.id })}
                 aria-current={active ? "page" : undefined}
-                className={cn("flex min-w-0 flex-1 items-center gap-3 px-3 py-2 text-left text-sm", collapsed && "justify-center px-0")}
+                className={cn("flex min-w-0 flex-1 items-center gap-3 px-3 py-2 text-left text-sm", collapsed && "w-full justify-center gap-0 px-0")}
               >
                 <span className="flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-md text-xs font-semibold" style={{ background: s.color, color: readableOn(s.color) }} aria-hidden>
                   {s.icon?.startsWith("data:image/") ? (
@@ -118,10 +119,12 @@ export function Sidebar({ view, onNavigate, onNewSubject, onEditSubject, onDelet
                 </span>
                 <span className={cn(fade(collapsed), active ? "text-fg" : "text-muted group-hover:text-fg", collapsed && "w-0")}>{s.name}</span>
               </button>
-              <span className="flex pr-1 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100 max-md:opacity-100">
-                <IconButton label={`Editar ${s.name}`} onClick={() => onEditSubject(s)}><Pencil className="size-3.5" /></IconButton>
-                <IconButton label={`Excluir ${s.name}`} onClick={() => onDeleteSubject(s)}><Trash2 className="size-3.5" /></IconButton>
-              </span>
+              {!collapsed && (
+                <span className="flex pr-1 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100 max-md:opacity-100">
+                  <IconButton label={`Editar ${s.name}`} onClick={() => onEditSubject(s)}><Pencil className="size-3.5" /></IconButton>
+                  <IconButton label={`Excluir ${s.name}`} onClick={() => onDeleteSubject(s)}><Trash2 className="size-3.5" /></IconButton>
+                </span>
+              )}
             </div>
           );
         })}
