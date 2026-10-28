@@ -659,6 +659,11 @@ div, main, aside { scrollbar-width: thin; scrollbar-color: #42444f transparent; 
 }
 
 
+/* Shared avatar media: still photos, animated GIFs and muted looping video all crop consistently. */
+.avatar-media { display: block; width: 100%; height: 100%; object-fit: cover; }
+.profile-avatar-content { border-radius: inherit; }
+.sidebar-avatar .avatar-media { width: 100%; height: 100%; object-fit: cover; }
+
 /* Perfil acadêmico e mural local */
 .profile-page { max-width: 880px; }
 .profile-hero { border-color: var(--border); }
