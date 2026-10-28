@@ -65,7 +65,7 @@ export function Sidebar({ view, onNavigate, onNewSubject, onEditSubject, onDelet
         <span className="sidebar-brand-mark" aria-hidden><BookOpenCheck className="size-[1.2rem]" strokeWidth={2.2} /></span>
         <span className={cn("sidebar-brand-copy", collapsed && "opacity-0")}>
           <span className="sidebar-brand-name">StudyFlow</span>
-          <span className="sidebar-brand-tagline">SEU ESPAÇO DE ESTUDOS</span>
+          <span className="sidebar-brand-tagline">ESTUDOS LOCAIS</span>
         </span>
       </div>
 
