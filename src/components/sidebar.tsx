@@ -5,7 +5,7 @@ import { BookOpenCheck, Brain, Home, Library, ListChecks, NotebookPen, Pencil, P
 import { db } from "@/lib/db";
 import { cn } from "@/lib/cn";
 import { initials } from "@/lib/format";
-import { rankPanels, type PanelId } from "@/lib/adaptive";
+import { rankPanels, readableOn, type PanelId } from "@/lib/adaptive";
 import { IconButton } from "./ui";
 import { useAdaptive } from "./use-adaptive";
 import { useNow } from "./use-now";
@@ -124,7 +124,9 @@ export function Sidebar({ view, onNavigate, onNewSubject, onEditSubject, onDelet
                 aria-current={active ? "page" : undefined}
                 className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2 text-left text-sm"
               >
-                <span className="flex size-4 shrink-0 items-center justify-center"><span className="size-2.5 rounded-full" style={{ background: s.color }} aria-hidden /></span>
+                <span className="flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-md text-xs font-semibold shadow-sm" style={{ background: s.color, color: readableOn(s.color) }} aria-hidden>
+                  {s.icon?.startsWith("data:image/") ? <img src={s.icon} alt="" className="size-full object-cover" /> : s.icon ? s.icon : s.name.trim().slice(0, 1).toLocaleUpperCase("pt-BR")}
+                </span>
                 <span className={cn(fade(collapsed), active ? "text-fg" : "text-muted group-hover:text-fg")}>{s.name}</span>
               </button>
               <span className="flex pr-1 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100 max-md:opacity-100">
