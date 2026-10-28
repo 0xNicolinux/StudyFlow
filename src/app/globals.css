@@ -492,7 +492,6 @@ button, a { touch-action: manipulation; }
   display: flex;
   min-height: 42px;
   align-items: center;
-  justify-content: flex-start;
   gap: 12px;
   color: #a4a4a4;
 }
