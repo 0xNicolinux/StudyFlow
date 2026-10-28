@@ -4,7 +4,6 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { BookOpenCheck, Brain, Home, Library, ListChecks, NotebookPen, Pencil, Pin, Plus, Settings, Timer, Trash2 } from "lucide-react";
 import { db } from "@/lib/db";
 import { cn } from "@/lib/cn";
-import { initials } from "@/lib/format";
 import { readableOn } from "@/lib/adaptive";
 import { IconButton } from "./ui";
 import { AvatarMedia } from "./avatar-media";
