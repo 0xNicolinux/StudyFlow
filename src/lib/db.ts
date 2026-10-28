@@ -1,11 +1,12 @@
 import Dexie, { type EntityTable } from "dexie";
-import type { Conversation, DocText, Flashcard, Message, Note, Profile, Quiz, QuizAttempt, StudyDocument, StudySession, Subject, Task } from "./schemas";
+import type { Conversation, DocText, Flashcard, Message, Note, Profile, ProfilePost, Quiz, QuizAttempt, StudyDocument, StudySession, Subject, Task } from "./schemas";
 
 export class StudyFlowDB extends Dexie {
   subjects!: EntityTable<Subject, "id">;
   tasks!: EntityTable<Task, "id">;
   notes!: EntityTable<Note, "id">;
   profile!: EntityTable<Profile, "id">;
+  posts!: EntityTable<ProfilePost, "id">;
   conversations!: EntityTable<Conversation, "id">;
   messages!: EntityTable<Message, "id">;
   studySessions!: EntityTable<StudySession, "id">;
@@ -39,6 +40,10 @@ export class StudyFlowDB extends Dexie {
       documents: "id, subjectId, createdAt",
       docTexts: "id",
       docFiles: "id",
+    });
+    // v4: publicações do feed de perfil, armazenadas localmente como os demais dados.
+    this.version(4).stores({
+      posts: "id, createdAt",
     });
   }
 }
