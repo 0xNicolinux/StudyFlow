@@ -39,7 +39,7 @@ export function TasksPanel({ subjectId }: { subjectId?: string }) {
 
   return (
     <section aria-label="Tarefas e avaliações" className="space-y-4">
-      <form onSubmit={add} className="space-y-2 rounded-xl border border-line bg-surface p-3">
+      <form onSubmit={add} className="task-create-form space-y-2 rounded-xl border border-line bg-surface p-3">
         <div className="flex flex-wrap gap-2">
           <Input className="min-w-48 flex-1" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Nova tarefa ou avaliação" aria-label="Título" maxLength={200} />
           <select aria-label="Tipo" value={kind} onChange={(e) => setKind(e.target.value as "tarefa" | "avaliacao")} className="rounded-lg border border-line bg-surface px-2 py-2 text-sm">
@@ -61,11 +61,11 @@ export function TasksPanel({ subjectId }: { subjectId?: string }) {
       {sorted === undefined ? <Loading /> : sorted.length === 0 ? (
         <EmptyState title="Nada por aqui ainda" hint="Adicione tarefas e datas de avaliação para acompanhar seus prazos." />
       ) : (
-        <ul className="divide-y divide-line rounded-xl border border-line bg-surface">
+        <ul className="task-rows divide-y divide-line rounded-xl border border-line bg-surface">
           {sorted.map((t) => {
             const subj = nameOf(t.subjectId);
             return (
-              <li key={t.id} className="fade-in flex items-center gap-3 px-3 py-2.5">
+              <li key={t.id} className="task-row fade-in flex items-center gap-3 px-3 py-2.5">
                 <input type="checkbox" checked={t.done} onChange={() => toggleTask(t.id)} aria-label={`Concluir ${t.title}`} className="size-4 accent-[var(--accent)]" />
                 <div className="min-w-0 flex-1">
                   <p className={cn("truncate text-sm", t.done && "text-muted line-through")}>{t.title}</p>
