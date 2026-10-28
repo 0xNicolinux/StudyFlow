@@ -7,6 +7,7 @@ import { cn } from "@/lib/cn";
 import { initials } from "@/lib/format";
 import { readableOn } from "@/lib/adaptive";
 import { IconButton } from "./ui";
+import { AvatarMedia } from "./avatar-media";
 import type { Subject } from "@/lib/schemas";
 import type { View } from "./app-shell";
 
@@ -54,14 +55,9 @@ export function Sidebar({ view, onNavigate, onNewSubject, onEditSubject, onDelet
           aria-label="Abrir perfil"
           title={collapsed ? profile?.name ?? "Estudante" : undefined}
         >
-          {profile?.photo ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={profile.photo} alt="" className="size-9 shrink-0 rounded-full object-cover" />
-          ) : (
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-accent/20 text-sm font-semibold text-accent">
-              {initials(profile?.name ?? "Estudante")}
-            </span>
-          )}
+          <span className={cn("sidebar-avatar size-9 shrink-0 overflow-hidden rounded-full", !profile?.photo && "flex items-center justify-center bg-accent/20 text-sm font-semibold text-accent")}>
+            <AvatarMedia media={profile?.photo} name={profile?.name ?? "Estudante"} className="size-full object-cover" />
+          </span>
           {!collapsed && (
             <span className="min-w-0 flex-1">
               <span className="block truncate text-sm font-medium">{profile?.name ?? "Estudante"}</span>
