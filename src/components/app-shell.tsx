@@ -82,7 +82,7 @@ export function AppShell() {
 
   let content;
   if (chatOpen) content = <ChatView chat={chat} subjectId={view.kind === "subject" ? view.id : null} onBack={() => setChatOpen(false)} onOpenSettings={() => navigate({ kind: "settings" })} />;
-  else if (view.kind === "home") content = <HomeDashboard onNavigate={navigate} />;
+  else if (view.kind === "home") content = <HomeDashboard onNavigate={navigate} onNewSubject={() => setDialog({ open: true, subject: null })} />;
   else if (view.kind === "tasks") content = <TasksPanel />;
   else if (view.kind === "notes") content = <NotesPanel />;
   else if (view.kind === "focus") content = <FocusPanel timer={timer} />;
@@ -109,14 +109,14 @@ export function AppShell() {
 
   return (
     <ChatCtx.Provider value={chat}>
-    <div className="flex h-dvh">
+    <div className="app-shell-root flex h-dvh">
       {/* Reserva o espaço no layout (largo se fixada, só o trilho se não); a barra em si flutua por cima ao expandir. */}
       <div className={cn("relative hidden shrink-0 md:block", side.animate && "transition-[width] duration-200 ease-out", side.pinned ? "w-72" : "w-14")}>
         <aside
           aria-label="Barra lateral"
           {...side.handlers}
           className={cn(
-            "absolute inset-y-0 left-0 z-30 overflow-hidden border-r border-line bg-surface",
+            "app-sidebar absolute inset-y-0 left-0 z-30 overflow-hidden border-r border-line bg-surface",
             side.animate && "transition-[width,box-shadow] duration-200 ease-out",
             side.expanded ? "w-72" : "w-14",
             side.expanded && !side.pinned && "shadow-2xl shadow-black/50",
@@ -131,7 +131,7 @@ export function AppShell() {
       {drawer && (
         <div className="fixed inset-0 z-40 md:hidden" role="dialog" aria-modal="true" aria-label="Menu">
           <div className="absolute inset-0 bg-black/60" onClick={() => setDrawer(false)} />
-          <aside className="fade-in absolute inset-y-0 left-0 flex w-[min(85vw,20rem)] flex-col border-r border-line bg-surface shadow-xl">
+          <aside className="app-sidebar fade-in absolute inset-y-0 left-0 flex w-[min(85vw,20rem)] flex-col border-r border-line bg-surface shadow-xl">
             <div className="flex justify-end px-2 pt-2">
               <IconButton label="Fechar menu" onClick={() => setDrawer(false)}><X className="size-4" /></IconButton>
             </div>
@@ -141,13 +141,13 @@ export function AppShell() {
       )}
 
       <div className="flex min-w-0 flex-1 flex-col" style={accent}>
-        <header className="flex items-center gap-2 border-b border-line px-4 py-3">
+        <header className="app-topbar flex items-center gap-3 border-b border-line px-4 py-3 md:px-6">
           <IconButton label="Abrir menu" onClick={() => setDrawer(true)} className="md:hidden"><Menu className="size-5" /></IconButton>
-          <h1 className="truncate text-base font-semibold">{title}</h1>
-          <div className="ml-auto flex items-center gap-2">
+          <div className="min-w-0"><p className="topbar-kicker hidden sm:block">SEU ESPAÇO DE ESTUDOS</p><h1 className="truncate text-base font-semibold">{title}</h1></div>
+          <div className="ml-auto flex shrink-0 items-center gap-2">
             {timer.state.status !== "idle" && view.kind !== "focus" && !chatOpen && (
               <button onClick={() => navigate({ kind: "focus" })} aria-label={`Cronômetro de ${timer.state.phase === "focus" ? "foco" : "descanso"}: ${timer.clock}. Abrir`}
-                className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface-2 px-3 py-1 text-sm tabular-nums hover:bg-surface-3">
+                className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface-2 px-3 py-1.5 text-sm tabular-nums transition-colors hover:bg-surface-3">
                 <Timer className="size-3.5 text-accent" aria-hidden /> {timer.clock}{timer.state.status === "paused" && <span className="text-xs text-muted">pausado</span>}
               </button>
             )}
@@ -157,8 +157,8 @@ export function AppShell() {
           </div>
         </header>
 
-        <main className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6" id="workspace">
-          <div className="mx-auto max-w-5xl">{content}</div>
+        <main className="app-workspace min-h-0 flex-1 overflow-y-auto p-4 md:p-7 xl:p-8" id="workspace">
+          <div className="workspace-content">{content}</div>
         </main>
 
         <Composer chat={chat} activeSubjectId={view.kind === "subject" ? view.id : null} onSubmitted={() => setChatOpen(true)} />
