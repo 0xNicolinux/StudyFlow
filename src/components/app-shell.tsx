@@ -12,6 +12,7 @@ import { HomeDashboard, SubjectDashboard, TAB_PANEL, type SubjectTab } from "./d
 import { TasksPanel } from "./tasks-panel";
 import { NotesPanel } from "./notes-panel";
 import { SettingsPanel } from "./settings-panel";
+import { ProfilePanel } from "./profile-panel";
 import { FocusPanel } from "./focus-panel";
 import { FlashcardsPanel } from "./flashcards-panel";
 import { QuizzesPanel } from "./quizzes-panel";
@@ -23,6 +24,8 @@ import { Composer } from "./composer";
 import { useChat } from "./use-chat";
 import { useSidebar } from "./use-sidebar";
 import { trackPanel, trackSubject, untrackSubject } from "./use-adaptive";
+import { themeStore } from "@/lib/theme-pref";
+import { useLocalStore } from "./use-local-store";
 import { IconButton, Loading } from "./ui";
 import type { Subject } from "@/lib/schemas";
 
@@ -35,6 +38,7 @@ export type View =
   | { kind: "quizzes" }
   | { kind: "library" }
   | { kind: "settings" }
+  | { kind: "profile" }
   | { kind: "subject"; id: string; tab?: SubjectTab };
 
 const TITLES: Record<Exclude<View["kind"], "subject">, string> = {
@@ -46,6 +50,7 @@ const TITLES: Record<Exclude<View["kind"], "subject">, string> = {
   quizzes: "Quizzes",
   library: "Biblioteca de materiais",
   settings: "Configurações",
+  profile: "Perfil",
 };
 
 export function AppShell() {
@@ -55,6 +60,7 @@ export function AppShell() {
   const [dialog, setDialog] = useState<{ open: boolean; subject: Subject | null }>({ open: false, subject: null });
 
   const side = useSidebar();
+  const { accent: preferredAccent } = useLocalStore(themeStore);
   const timer = usePomodoro();
   const chat = useChat(view.kind === "subject" ? view.id : null);
   const activeSubject = useLiveQuery(async () => (view.kind === "subject" ? ((await db.subjects.get(view.id)) ?? null) : undefined), [view]);
@@ -63,7 +69,7 @@ export function AppShell() {
     // Registra só no aparelho: alimenta a ordem dos painéis e as sugestões (clicar no item já aberto não conta).
     if (v.kind !== view.kind || (v.kind === "subject" && view.kind === "subject" && v.id !== view.id)) {
       if (v.kind === "subject") trackSubject(v.id);
-      else if (v.kind !== "home" && v.kind !== "settings") trackPanel(v.kind);
+      else if (v.kind !== "home" && v.kind !== "settings" && v.kind !== "profile") trackPanel(v.kind);
     }
     if (v.kind === "subject" && v.tab && TAB_PANEL[v.tab]) trackPanel(TAB_PANEL[v.tab]!, v.id);
     setView(v);
@@ -90,6 +96,7 @@ export function AppShell() {
   else if (view.kind === "quizzes") content = <QuizzesPanel />;
   else if (view.kind === "library") content = <LibraryPanel />;
   else if (view.kind === "settings") content = <SettingsPanel />;
+  else if (view.kind === "profile") content = <ProfilePanel />;
   else if (activeSubject === undefined) content = <Loading />;
   else if (activeSubject === null) content = <p className="text-sm text-muted">Esta disciplina não existe mais.</p>;
   else content = <SubjectDashboard key={activeSubject.id} subject={activeSubject} initialTab={view.kind === "subject" ? view.tab : undefined} onNavigate={navigate} />;
@@ -103,9 +110,9 @@ export function AppShell() {
   };
 
   // Ao entrar numa disciplina, o acento da área de trabalho assume a cor dela (botões, abas, foco).
-  const accent: CSSProperties | undefined = view.kind === "subject" && activeSubject
+  const accent: CSSProperties = view.kind === "subject" && activeSubject
     ? ({ "--accent": activeSubject.color, "--accent-fg": readableOn(activeSubject.color) } as CSSProperties)
-    : undefined;
+    : ({ "--accent": preferredAccent, "--accent-fg": readableOn(preferredAccent) } as CSSProperties);
 
   return (
     <ChatCtx.Provider value={chat}>
