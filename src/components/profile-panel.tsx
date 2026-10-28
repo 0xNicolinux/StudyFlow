@@ -2,7 +2,7 @@
 
 import { useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { ImagePlus, MapPin, Paperclip, Pencil, SendHorizontal, Trash2, Video, X } from "lucide-react";
+import { ImagePlus, Paperclip, Pencil, SendHorizontal, Trash2, X } from "lucide-react";
 import { db } from "@/lib/db";
 import { createProfilePost, deleteProfilePost, saveProfile } from "@/lib/repo";
 import type { Profile, ProfilePost } from "@/lib/schemas";
