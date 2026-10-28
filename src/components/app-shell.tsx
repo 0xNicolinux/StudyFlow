@@ -144,7 +144,6 @@ export function AppShell() {
         <header className="app-topbar flex items-center gap-3 border-b border-line px-4 py-3 md:px-6">
           <IconButton label="Abrir menu" onClick={() => setDrawer(true)} className="md:hidden"><Menu className="size-5" /></IconButton>
           <div className="min-w-0">
-            <p className="topbar-kicker hidden sm:block">SEU ESPAÇO DE ESTUDOS</p>
             <div className="flex min-w-0 items-center gap-2">
               {view.kind === "subject" && activeSubject && (
                 <span className="discipline-title-mark flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-md text-xs font-semibold" style={{ background: activeSubject.color, color: readableOn(activeSubject.color) }} aria-hidden>
