@@ -1,5 +1,5 @@
-const CACHE = "studyflow-v2";
-const SHELL = ["/", "/manifest.webmanifest", "/icons/icon.svg", "/pdf.worker.min.mjs"];
+const CACHE = "studyflow-v3";
+const SHELL = ["/", "/study", "/manifest.webmanifest", "/icons/icon.svg", "/pdf.worker.min.mjs"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
@@ -30,10 +30,16 @@ self.addEventListener("fetch", (e) => {
   if (req.mode === "navigate") {
     e.respondWith(
       fetch(req).then((res) => {
-        const copy = res.clone();
-        caches.open(CACHE).then((c) => c.put("/", copy));
+        if (res.ok) {
+          const copy = res.clone();
+          caches.open(CACHE).then((c) => c.put(req, copy));
+        }
         return res;
-      }).catch(() => caches.match("/")),
+      }).catch(async () => {
+        // Cada rota tem seu próprio documento offline: /study nunca deve virar a landing page.
+        const cachedRoute = await caches.match(req);
+        return cachedRoute ?? (await caches.match("/"));
+      }),
     );
     return;
   }
