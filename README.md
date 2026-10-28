@@ -14,7 +14,7 @@ Etapas 1–7 implementadas e verificadas, exceto o que está em "Limitações".
 
 ## Limitações conhecidas
 - Nunca testado contra o OpenRouter real (sem chave no ambiente de desenvolvimento): o CORS e os modelos reais precisam de conferência manual.
-- PDFs escaneados (só imagem) não têm texto extraível: OCR não é suportado. PDFs protegidos por senha não são lidos.
+- A Biblioteca extrai texto selecionável, não a página visual do PDF. PDFs escaneados/fotos não funcionam porque OCR não é suportado; PDFs protegidos por senha ou corrompidos não são lidos. Fórmulas, tabelas, colunas e diagramas podem perder a formatação — confira o texto extraído antes de estudar ou enviá-lo à IA.
 - Documentos: no máximo 30 MB por arquivo, 400 páginas e 2 milhões de caracteres de texto extraído por documento.
 - Sessão de foco com o app fechado: ao reabrir, é registrada pelo tempo planejado.
 - Dados e chave de API ficam apenas no navegador (sem sincronização entre dispositivos).
