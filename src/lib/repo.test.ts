@@ -9,6 +9,7 @@ import {
   deleteConversation,
   listConversations,
   createNote,
+  createProfilePost,
   createSubject,
   createTask,
   deleteSubject,
@@ -67,7 +68,8 @@ describe("backup", () => {
     const s = await createSubject({ name: "Física", icon: "📘" });
     await createTask({ title: "Prova 1", subjectId: s.id, kind: "avaliacao", dueAt: 1_800_000_000_000 });
     await createNote({ title: "Resumo", subjectId: s.id, body: "# Leis de Newton" });
-    await saveProfile({ name: "Ana", photo: null });
+    await saveProfile({ name: "Ana", photo: null, institution: "UFSE", educationLevel: "superior", graduationYear: 2028, role: "estudante", country: "Brasil" });
+    const post = await createProfilePost({ text: "Primeira publicação", media: null });
     const backup = JSON.stringify(await exportBackup());
 
     __setDb(new StudyFlowDB(`test-${Math.random()}`));
@@ -76,6 +78,8 @@ describe("backup", () => {
     expect((await db.notes.toArray())[0].body).toBe("# Leis de Newton");
     expect((await db.subjects.get(s.id))?.icon).toBe("📘");
     expect((await db.profile.get("me"))?.name).toBe("Ana");
+    expect((await db.profile.get("me"))?.institution).toBe("UFSE");
+    expect((await db.posts.get(post.id))?.text).toBe("Primeira publicação");
   });
 
   it("rejeita JSON inválido sem alterar os dados atuais", async () => {
