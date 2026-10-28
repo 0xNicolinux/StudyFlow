@@ -9,8 +9,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Ambiente de estudos local-first para universitários.",
     start_url: "/",
     display: "standalone",
-    background_color: "#030303",
-    theme_color: "#030303",
+    background_color: "#000000",
+    theme_color: "#000000",
     lang: "pt-BR",
     icons: [
       { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
