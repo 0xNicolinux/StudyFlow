@@ -64,7 +64,7 @@ describe("tarefas", () => {
 
 describe("backup", () => {
   it("exporta e reimporta os mesmos dados", async () => {
-    const s = await createSubject({ name: "Física" });
+    const s = await createSubject({ name: "Física", icon: "📘" });
     await createTask({ title: "Prova 1", subjectId: s.id, kind: "avaliacao", dueAt: 1_800_000_000_000 });
     await createNote({ title: "Resumo", subjectId: s.id, body: "# Leis de Newton" });
     await saveProfile({ name: "Ana", photo: null });
@@ -74,6 +74,7 @@ describe("backup", () => {
     const result = await importBackup(backup);
     expect(result).toMatchObject({ ok: true, counts: { subjects: 1, tasks: 1, notes: 1 } });
     expect((await db.notes.toArray())[0].body).toBe("# Leis de Newton");
+    expect((await db.subjects.get(s.id))?.icon).toBe("📘");
     expect((await db.profile.get("me"))?.name).toBe("Ana");
   });
 
