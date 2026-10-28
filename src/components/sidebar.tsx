@@ -49,9 +49,9 @@ export function Sidebar({ view, onNavigate, onNewSubject, onEditSubject, onDelet
     <div className="flex h-full w-full flex-col bg-surface">
       <div className={cn("sidebar-profile-row flex items-center gap-1", collapsed ? "mx-2 my-3 justify-center" : "mx-3 mb-3 mt-2")}>
         <button
-          onClick={() => onNavigate({ kind: "settings" })}
-          className={cn("sidebar-profile flex min-w-0 items-center gap-3 text-left", collapsed ? "justify-center" : "flex-1")}
-          aria-label="Perfil e configurações"
+          onClick={() => onNavigate({ kind: "profile" })}
+          className={cn("sidebar-profile flex min-w-0 items-center gap-3 text-left", view.kind === "profile" && "is-active", collapsed ? "justify-center" : "flex-1")}
+          aria-label="Abrir perfil"
           title={collapsed ? profile?.name ?? "Estudante" : undefined}
         >
           {profile?.photo ? (
