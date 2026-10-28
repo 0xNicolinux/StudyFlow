@@ -143,6 +143,16 @@ describe("conversas por disciplina", () => {
   });
 });
 
+describe("identificação da disciplina", () => {
+  it("salva e atualiza o ícone opcional sem quebrar disciplinas antigas", async () => {
+    const plain = await createSubject({ name: "Física" });
+    expect(plain.icon).toBeNull();
+    const custom = await updateSubject(plain.id, { icon: "🧪", color: "#06b6d4" });
+    expect(custom.icon).toBe("🧪");
+    expect(custom.color).toBe("#06b6d4");
+  });
+});
+
 describe("cor padrão da disciplina", () => {
   it("usa a cor menos repetida, mesmo depois de excluir disciplinas", async () => {
     const [a, b] = [await createSubject({ name: "A" }), await createSubject({ name: "B" })];
