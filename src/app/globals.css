@@ -614,3 +614,39 @@ div, main, aside { scrollbar-width: thin; scrollbar-color: #42444f transparent; 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
 }
+
+
+/* Polimento final do trilho: alinhamento consistente e destaque ativo quase neutro. */
+.app-sidebar { border-right-color: #202020; }
+.app-sidebar .sidebar-nav-item[aria-current="page"] {
+  color: #ededed;
+  border-color: transparent;
+  background: #151515;
+  box-shadow: none;
+}
+.app-sidebar .sidebar-subject-item.is-active {
+  border-color: transparent;
+  background: #151515;
+}
+.app-sidebar :focus-visible {
+  outline: 1px solid rgb(159 233 247 / 38%);
+  outline-offset: 1px;
+}
+.app-sidebar .sidebar-profile,
+.app-sidebar .sidebar-nav-item,
+.app-sidebar .sidebar-subject-item,
+.app-sidebar .sidebar-footer {
+  border-radius: 5px;
+}
+.app-sidebar .sidebar-nav-item[aria-current="page"]::before {
+  display: none;
+}
+.app-sidebar .sidebar-subject-item > button {
+  min-width: 0;
+}
+.app-sidebar .sidebar-subject-item > button > span:first-child {
+  margin-inline: 0;
+}
+.app-sidebar .sidebar-footer .sidebar-nav-item {
+  min-height: 40px;
+}
