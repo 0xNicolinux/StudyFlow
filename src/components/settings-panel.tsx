@@ -1,20 +1,21 @@
 "use client";
 import { useRef, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { Download, Upload } from "lucide-react";
+import { Check, Download, Upload } from "lucide-react";
 import { db } from "@/lib/db";
-import { exportBackup, importBackup, saveProfile } from "@/lib/repo";
-import { Button, Field, Input } from "./ui";
+import { exportBackup, importBackup } from "@/lib/repo";
+import { Button } from "./ui";
 import { AiSection } from "./ai-section";
 import { resetAdaptive } from "./use-adaptive";
+import { ACCENT_OPTIONS, themeStore } from "@/lib/theme-pref";
+import { useLocalStore } from "./use-local-store";
 
 const MAX_PHOTO = 400 * 1024;
 
 export function SettingsPanel() {
-  const profile = useLiveQuery(() => db.profile.get("me").then((p) => p ?? null), []);
   return (
-    <div className="fade-in max-w-xl space-y-8">
-      {profile !== undefined && <ProfileForm key={profile?.name ?? "none"} initialName={profile?.name ?? ""} initialPhoto={profile?.photo ?? null} />}
+    <div className="settings-page fade-in w-full max-w-3xl space-y-9">
+      <AppearanceSection />
       <PersonalizationSection />
       <BackupSection />
       <AiSection />
@@ -22,42 +23,32 @@ export function SettingsPanel() {
   );
 }
 
-function ProfileForm({ initialName, initialPhoto }: { initialName: string; initialPhoto: string | null }) {
-  const [name, setName] = useState(initialName);
-  const [photo, setPhoto] = useState<string | null>(initialPhoto);
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-
-  function onFile(file: File | undefined) {
-    if (!file) return;
-    if (!file.type.startsWith("image/")) return setMsg({ ok: false, text: "Escolha um arquivo de imagem." });
-    if (file.size > MAX_PHOTO) return setMsg({ ok: false, text: "A imagem deve ter no máximo 400 KB." });
-    const r = new FileReader();
-    r.onload = () => { setPhoto(String(r.result)); setMsg(null); };
-    r.onerror = () => setMsg({ ok: false, text: "Não foi possível ler a imagem." });
-    r.readAsDataURL(file);
-  }
-
-  async function save(e: React.FormEvent) {
-    e.preventDefault();
-    try {
-      await saveProfile({ name, photo });
-      setMsg({ ok: true, text: "Perfil salvo." });
-    } catch {
-      setMsg({ ok: false, text: "Informe um nome válido." });
-    }
-  }
-
+function AppearanceSection() {
+  const { accent } = useLocalStore(themeStore);
   return (
-    <form onSubmit={save} className="space-y-3">
-      <h2 className="text-sm font-semibold">Perfil</h2>
-      <Field label="Nome"><Input value={name} onChange={(e) => setName(e.target.value)} maxLength={60} placeholder="Como devemos chamar você?" /></Field>
-      <Field label="Foto (opcional)"><input type="file" accept="image/*" onChange={(e) => onFile(e.target.files?.[0])} className="block w-full text-sm text-muted file:mr-3 file:rounded-lg file:border file:border-line file:bg-surface-2 file:px-3 file:py-2 file:text-sm file:text-fg" /></Field>
-      <div className="flex items-center gap-3">
-        <Button type="submit" variant="primary">Salvar perfil</Button>
-        {photo && <Button type="button" variant="ghost" onClick={() => setPhoto(null)}>Remover foto</Button>}
-        {msg && <span role="status" className={msg.ok ? "text-sm text-success" : "text-sm text-danger"}>{msg.text}</span>}
+    <section className="settings-section space-y-3">
+      <div>
+        <h2 className="text-sm font-semibold">Aparência</h2>
+        <p className="mt-1 text-sm text-muted">Escolha a cor de destaque da interface. Dentro de uma disciplina, a cor dela continua sendo usada.</p>
       </div>
-    </form>
+      <div className="accent-picker">
+        {ACCENT_OPTIONS.map((option) => (
+          <button
+            key={option.color}
+            type="button"
+            aria-label={`Usar cor ${option.label}`}
+            aria-pressed={accent === option.color}
+            title={option.label}
+            onClick={() => themeStore.set({ accent: option.color })}
+            className={`accent-swatch ${accent === option.color ? "is-selected" : ""}`}
+            style={{ "--swatch": option.color } as React.CSSProperties}
+          >
+            {accent === option.color && <Check size={15} aria-hidden />}
+          </button>
+        ))}
+      </div>
+      <p className="text-xs text-muted">Cor atual: {ACCENT_OPTIONS.find((x) => x.color === accent)?.label ?? "Personalizada"}</p>
+    </section>
   );
 }
 
