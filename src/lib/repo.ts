@@ -19,10 +19,15 @@ import {
 
 const uid = () => crypto.randomUUID();
 
-export const SUBJECT_COLORS = ["#8b7cf6", "#5b9cf5", "#4fc1b0", "#e8b94f", "#e98a6a", "#d47fc4"];
+export const SUBJECT_COLORS = [
+  "#8b7cf6", "#5b9cf5", "#4fc1b0", "#e8b94f", "#e98a6a", "#d47fc4",
+  "#22c55e", "#f43f5e", "#f97316", "#06b6d4", "#a3e635", "#818cf8",
+  "#c084fc", "#fb7185", "#14b8a6", "#facc15", "#64748b", "#ec4899",
+  "#84cc16", "#0ea5e9", "#d946ef", "#78716c",
+];
 
 /* ---------- Disciplinas ---------- */
-export async function createSubject(input: { name: string; color?: string; goals?: string }): Promise<Subject> {
+export async function createSubject(input: { name: string; color?: string; goals?: string; icon?: string | null }): Promise<Subject> {
   const now = Date.now();
   const subject = SubjectSchema.parse({
     id: uid(),
@@ -30,6 +35,7 @@ export async function createSubject(input: { name: string; color?: string; goals
     // Sem cor escolhida, usa a menos repetida entre as disciplinas existentes (em vez de girar pela contagem).
     color: input.color ?? leastUsedColor(SUBJECT_COLORS, (await db.subjects.toArray()).map((x) => x.color)),
     goals: input.goals ?? "",
+    icon: input.icon ?? null,
     createdAt: now,
     updatedAt: now,
   });
@@ -37,7 +43,7 @@ export async function createSubject(input: { name: string; color?: string; goals
   return subject;
 }
 
-export async function updateSubject(id: string, patch: Partial<Pick<Subject, "name" | "color" | "goals">>) {
+export async function updateSubject(id: string, patch: Partial<Pick<Subject, "name" | "color" | "goals" | "icon">>) {
   const current = await db.subjects.get(id);
   if (!current) throw new Error("Disciplina não encontrada");
   const next = SubjectSchema.parse({ ...current, ...patch, updatedAt: Date.now() });
