@@ -181,7 +181,7 @@ export function AppShell() {
           <div className="workspace-content">{content}</div>
         </main>
 
-        <Composer chat={chat} activeSubjectId={view.kind === "subject" ? view.id : null} onSubmitted={() => setChatOpen(true)} />
+        {(view.kind !== "profile" || chatOpen) && <Composer chat={chat} activeSubjectId={view.kind === "subject" ? view.id : null} onSubmitted={() => setChatOpen(true)} />}
       </div>
 
       <SubjectDialog
