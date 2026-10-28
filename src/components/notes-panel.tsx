@@ -28,15 +28,15 @@ export function NotesPanel({ subjectId }: { subjectId?: string }) {
   }
 
   return (
-    <section aria-label="Anotações" className="grid gap-4 md:grid-cols-[14rem_1fr]">
+    <section aria-label="Anotações" className="notes-workspace grid gap-4 md:grid-cols-[14rem_1fr]">
       <div className="space-y-2">
         <Button onClick={add} className="w-full" variant="primary"><Plus className="size-4" aria-hidden /> Nova anotação</Button>
         {notes === undefined ? <Loading /> : notes.length === 0 ? (
           <EmptyState title="Sem anotações" hint="Crie a primeira para começar." />
         ) : (
-          <ul className="space-y-0.5">
+          <ul className="notes-list space-y-0.5">
             {notes.map((n) => (
-              <li key={n.id} className={cn("group flex items-center rounded-lg", n.id === selectedId ? "bg-surface-3" : "hover:bg-surface-2")}>
+              <li key={n.id} className={cn("notes-list-row group flex items-center rounded-lg", n.id === selectedId ? "is-selected" : "")}>
                 <button onClick={() => setSelectedId(n.id)} className="min-w-0 flex-1 truncate px-2.5 py-2 text-left text-sm">{n.title}</button>
                 <IconButton label={`Excluir ${n.title}`} onClick={() => remove(n)} className="opacity-0 focus:opacity-100 group-hover:opacity-100 max-md:opacity-100"><Trash2 className="size-3.5" /></IconButton>
               </li>
@@ -45,7 +45,7 @@ export function NotesPanel({ subjectId }: { subjectId?: string }) {
         )}
       </div>
       {selected ? <NoteEditor key={selected.id} note={selected} /> : (
-        <div className="hidden rounded-xl border border-dashed border-line p-10 text-center text-sm text-muted md:block">Selecione ou crie uma anotação.</div>
+        <div className="notes-empty hidden border border-line p-10 text-center text-sm text-muted md:block">Selecione ou crie uma anotação.</div>
       )}
     </section>
   );
