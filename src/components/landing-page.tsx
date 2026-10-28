@@ -18,13 +18,6 @@ export function LandingPage() {
       </div>
       <div className="landing-ocean-shade" aria-hidden="true" />
 
-      <header className="landing-nav landing-nav-overlay">
-        <Link href="/" className="landing-brand" aria-label="StudyFlow — início">
-          <span className="landing-brand-mark">SF</span>
-          <span>StudyFlow</span>
-        </Link>
-      </header>
-
       <section className="landing-copy landing-copy-overlay" aria-labelledby="landing-title">
         <h1 id="landing-title" className="landing-title">
           StudyFlow<span aria-hidden="true">.</span>
@@ -40,12 +33,6 @@ export function LandingPage() {
           <span>Entrar no ambiente de estudos</span>
           <ArrowRight className="landing-enter-arrow" size={18} aria-hidden="true" />
         </Link>
-
-        <div className="landing-trust">
-          <span>SEM CONTA</span>
-          <span aria-hidden="true">/</span>
-          <span>DADOS NO SEU DISPOSITIVO</span>
-        </div>
       </section>
 
     </main>
