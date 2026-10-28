@@ -5,9 +5,9 @@ import type { Suggestion } from "@/lib/adaptive";
 export function Suggestions({ items, onAct }: { items: Suggestion[]; onAct: (s: Suggestion) => void }) {
   if (items.length === 0) return null;
   return (
-    <section aria-labelledby="sug" className="space-y-2">
+    <section aria-labelledby="sug" className="dashboard-section space-y-2">
       <h2 id="sug" className="text-sm font-semibold">Sugestões para agora</h2>
-      <ul className="divide-y divide-line rounded-xl border border-line bg-surface">
+      <ul className="suggestions-panel divide-y divide-line rounded-xl border border-line bg-surface">
         {items.map((s) => (
           <li key={s.id} className="flex items-center justify-between gap-3 px-3 py-2.5 text-sm">
             <span className="min-w-0">{s.text}</span>
