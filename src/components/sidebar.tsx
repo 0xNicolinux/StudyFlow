@@ -91,13 +91,13 @@ export function Sidebar({ view, onNavigate, onNewSubject, onEditSubject, onDelet
 
       <div className="h-3 shrink-0" />
       {!collapsed && (
-        <div className="mt-2 flex items-center justify-between px-3">
+        <div className="mt-1 flex items-center justify-between px-2">
           <h2 className="sidebar-section-label">Disciplinas</h2>
           <IconButton label="Nova disciplina" onClick={onNewSubject}><Plus className="size-4" /></IconButton>
         </div>
       )}
 
-      <div className={cn("mt-1 min-h-0 space-y-0.5 overflow-y-auto px-2 pb-2", collapsed ? "max-h-[42%] flex-none" : "flex-1")}>
+      <div className={cn("mt-0.5 min-h-0 space-y-0 overflow-y-auto px-1.5 pb-1.5", collapsed ? "max-h-[42%] flex-none" : "flex-1")}>
         {subjects === undefined && <div className="h-9 animate-pulse rounded-lg bg-surface-2" />}
         {subjects?.length === 0 && (
           <p className={cn("px-3 py-3 text-sm text-muted transition-opacity", collapsed && "opacity-0")}>Nenhuma disciplina ainda. Use o botão + para criar a primeira.</p>
@@ -109,9 +109,9 @@ export function Sidebar({ view, onNavigate, onNewSubject, onEditSubject, onDelet
               <button
                 onClick={() => onNavigate({ kind: "subject", id: s.id })}
                 aria-current={active ? "page" : undefined}
-                className={cn("flex min-w-0 flex-1 items-center gap-3 px-3 py-2 text-left text-sm", collapsed && "w-full justify-center gap-0 px-0")}
+                className={cn("flex min-w-0 flex-1 items-center gap-2 px-2 py-1.5 text-left text-[13px]", collapsed && "w-full justify-center gap-0 px-0")}
               >
-                <span className="flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-md text-xs font-semibold" style={{ background: s.color, color: readableOn(s.color) }} aria-hidden>
+                <span className="flex size-5 shrink-0 items-center justify-center overflow-hidden rounded-[4px] text-[10px] font-medium" style={{ background: s.color, color: readableOn(s.color) }} aria-hidden>
                   {s.icon?.startsWith("data:image/") ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={s.icon} alt="" className="size-full object-cover" />
