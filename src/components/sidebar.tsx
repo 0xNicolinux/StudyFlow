@@ -56,19 +56,23 @@ export function Sidebar({ view, onNavigate, onNewSubject, onEditSubject, onDelet
 
   return (
     <div className="flex h-full w-full flex-col bg-surface">
-      {pin && (
-        <div className="flex items-center gap-2 px-3 pt-3">
+      <div className="sidebar-brand">
+        <span className="sidebar-brand-mark" aria-hidden><BookOpenCheck className="size-[1.2rem]" strokeWidth={2.2} /></span>
+        <span className={cn("sidebar-brand-copy", collapsed && "opacity-0")}>
+          <span className="sidebar-brand-name">StudyFlow</span>
+          <span className="sidebar-brand-tagline">SEU ESPAÇO DE ESTUDOS</span>
+        </span>
+        {pin && (
           <IconButton label="Fixar barra lateral" aria-pressed={pin.pinned} onClick={pin.onToggle} className={cn(pin.pinned && "bg-accent/15 text-accent hover:bg-accent/25")}>
             <Pin className={cn("size-4 transition-transform", pin.pinned ? "fill-current" : "rotate-45")} aria-hidden />
           </IconButton>
-          <span className={cn(fade(collapsed), "text-sm font-semibold")}>StudyFlow</span>
-        </div>
-      )}
+        )}
+      </div>
 
       <button
         onClick={() => onNavigate({ kind: "settings" })}
         className={cn(
-          "flex items-center gap-3 rounded-xl border text-left transition-[margin,padding,background-color,border-color]",
+          "sidebar-profile flex items-center gap-3 rounded-xl border text-left transition-[margin,padding,background-color,border-color]",
           collapsed ? "mx-2.5 my-3 border-transparent bg-transparent p-0" : "m-3 border-line bg-surface-2 p-2.5 hover:bg-surface-3",
         )}
         aria-label="Perfil e configurações"
@@ -93,7 +97,7 @@ export function Sidebar({ view, onNavigate, onNewSubject, onEditSubject, onDelet
             key={kind}
             onClick={() => onNavigate({ kind })}
             aria-current={view.kind === kind ? "page" : undefined}
-            className={cn(ROW, view.kind === kind ? "bg-surface-3 text-fg" : "text-muted hover:bg-surface-2 hover:text-fg")}
+            className={cn(ROW, "sidebar-nav-item", view.kind === kind ? "text-fg" : "")}
           >
             <Icon className="size-4 shrink-0" aria-hidden /> <span className={fade(collapsed)}>{label}</span>
           </button>
@@ -102,7 +106,7 @@ export function Sidebar({ view, onNavigate, onNewSubject, onEditSubject, onDelet
 
       <div className="mx-3 mt-3 border-t border-line" />
       <div className={cn("mt-2 flex items-center justify-between px-5 transition-opacity", collapsed && "opacity-0")}>
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-muted">Disciplinas</h2>
+        <h2 className="sidebar-section-label">Disciplinas</h2>
         <IconButton label="Nova disciplina" onClick={onNewSubject}><Plus className="size-4" /></IconButton>
       </div>
 
@@ -114,7 +118,7 @@ export function Sidebar({ view, onNavigate, onNewSubject, onEditSubject, onDelet
         {subjects?.map((s) => {
           const active = view.kind === "subject" && view.id === s.id;
           return (
-            <div key={s.id} className={cn("group flex items-center rounded-lg transition-colors", active ? "bg-surface-3" : "hover:bg-surface-2")}>
+            <div key={s.id} className={cn("sidebar-subject-item group flex items-center rounded-lg transition-colors", active ? "is-active" : "")}>
               <button
                 onClick={() => onNavigate({ kind: "subject", id: s.id })}
                 aria-current={active ? "page" : undefined}
@@ -132,11 +136,11 @@ export function Sidebar({ view, onNavigate, onNewSubject, onEditSubject, onDelet
         })}
       </div>
 
-      <div className="border-t border-line p-2">
+      <div className="sidebar-footer border-t border-line p-2">
         <button
           onClick={() => onNavigate({ kind: "settings" })}
           aria-current={view.kind === "settings" ? "page" : undefined}
-          className={cn(ROW, view.kind === "settings" ? "bg-surface-3" : "text-muted hover:bg-surface-2 hover:text-fg")}
+          className={cn(ROW, "sidebar-nav-item", view.kind === "settings" ? "text-fg" : "")}
         >
           <Settings className="size-4 shrink-0" aria-hidden /> <span className={fade(collapsed)}>Configurações</span>
         </button>
