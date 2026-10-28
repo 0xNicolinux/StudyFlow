@@ -5,6 +5,7 @@ import { Download, Upload } from "lucide-react";
 import { db } from "@/lib/db";
 import { exportBackup, importBackup, saveProfile } from "@/lib/repo";
 import { Button, Field, Input } from "./ui";
+import { AiSection } from "./ai-section";
 
 const MAX_PHOTO = 400 * 1024;
 
@@ -14,12 +15,7 @@ export function SettingsPanel() {
     <div className="fade-in max-w-xl space-y-8">
       {profile !== undefined && <ProfileForm key={profile?.name ?? "none"} initialName={profile?.name ?? ""} initialPhoto={profile?.photo ?? null} />}
       <BackupSection />
-      <section className="space-y-2">
-        <h2 className="text-sm font-semibold">Inteligência artificial</h2>
-        <p className="rounded-xl border border-line bg-surface p-3 text-sm text-muted">
-          A configuração de provedores de IA ainda não foi implementada nesta versão. Quando existir, você usará sua própria chave de API e escolherá o que é enviado.
-        </p>
-      </section>
+      <AiSection />
     </div>
   );
 }
@@ -66,16 +62,18 @@ function ProfileForm({ initialName, initialPhoto }: { initialName: string; initi
 function BackupSection() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [withFiles, setWithFiles] = useState(false);
+  const docCount = useLiveQuery(() => db.documents.count(), []);
 
   async function doExport() {
     try {
-      const blob = new Blob([JSON.stringify(await exportBackup(), null, 2)], { type: "application/json" });
+      const blob = new Blob([JSON.stringify(await exportBackup({ includeFiles: withFiles }), null, 2)], { type: "application/json" });
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
       a.download = `studyflow-backup-${new Date().toISOString().slice(0, 10)}.json`;
       a.click();
       URL.revokeObjectURL(a.href);
-      setMsg({ ok: true, text: "Backup exportado." });
+      setMsg({ ok: true, text: withFiles || !docCount ? "Backup exportado." : "Backup exportado sem os arquivos originais da biblioteca (só o texto extraído)." });
     } catch {
       setMsg({ ok: false, text: "Falha ao exportar o backup." });
     }
@@ -89,7 +87,9 @@ function BackupSection() {
     }
     try {
       const r = await importBackup(await file.text());
-      setMsg(r.ok ? { ok: true, text: `Importado: ${r.counts.subjects} disciplinas, ${r.counts.tasks} tarefas, ${r.counts.notes} anotações.` } : { ok: false, text: r.error });
+      setMsg(r.ok
+        ? { ok: true, text: `Importado: ${r.counts.subjects} disciplinas, ${r.counts.tasks} tarefas, ${r.counts.notes} anotações, ${r.counts.flashcards} flashcards, ${r.counts.quizzes} quizzes e ${r.counts.documents} materiais.${r.documentsWithoutOriginal ? ` ${r.documentsWithoutOriginal} material(is) sem o arquivo original (restaurado só o texto extraído).` : ""}` }
+        : { ok: false, text: r.error });
     } catch {
       setMsg({ ok: false, text: "Falha ao importar o arquivo." });
     }
@@ -102,6 +102,10 @@ function BackupSection() {
       <p className="text-sm text-muted">
         Seus dados ficam somente neste navegador e <strong className="text-fg">não são sincronizados</strong> entre dispositivos. Se o armazenamento do navegador for apagado, eles serão perdidos — exporte backups com frequência.
       </p>
+      <label className="flex items-start gap-2 text-sm text-muted">
+        <input type="checkbox" className="mt-0.5 accent-[var(--accent)]" checked={withFiles} onChange={(e) => setWithFiles(e.target.checked)} />
+        <span>Incluir os arquivos originais da biblioteca (PDF/TXT/MD). O backup fica bem maior. Sem isso, só o texto extraído é salvo.</span>
+      </label>
       <div className="flex flex-wrap items-center gap-2">
         <Button onClick={doExport}><Download className="size-4" aria-hidden /> Exportar backup</Button>
         <Button onClick={() => fileRef.current?.click()}><Upload className="size-4" aria-hidden /> Importar backup</Button>

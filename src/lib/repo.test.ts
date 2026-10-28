@@ -67,7 +67,7 @@ describe("backup", () => {
 
     __setDb(new StudyFlowDB(`test-${Math.random()}`));
     const result = await importBackup(backup);
-    expect(result).toEqual({ ok: true, counts: { subjects: 1, tasks: 1, notes: 1 } });
+    expect(result).toMatchObject({ ok: true, counts: { subjects: 1, tasks: 1, notes: 1 } });
     expect((await db.notes.toArray())[0].body).toBe("# Leis de Newton");
     expect((await db.profile.get("me"))?.name).toBe("Ana");
   });

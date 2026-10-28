@@ -1,11 +1,20 @@
 import Dexie, { type EntityTable } from "dexie";
-import type { Note, Profile, Subject, Task } from "./schemas";
+import type { Conversation, DocText, Flashcard, Message, Note, Profile, Quiz, QuizAttempt, StudyDocument, StudySession, Subject, Task } from "./schemas";
 
 export class StudyFlowDB extends Dexie {
   subjects!: EntityTable<Subject, "id">;
   tasks!: EntityTable<Task, "id">;
   notes!: EntityTable<Note, "id">;
   profile!: EntityTable<Profile, "id">;
+  conversations!: EntityTable<Conversation, "id">;
+  messages!: EntityTable<Message, "id">;
+  studySessions!: EntityTable<StudySession, "id">;
+  flashcards!: EntityTable<Flashcard, "id">;
+  quizzes!: EntityTable<Quiz, "id">;
+  quizAttempts!: EntityTable<QuizAttempt, "id">;
+  documents!: EntityTable<StudyDocument, "id">;
+  docTexts!: EntityTable<DocText, "id">;
+  docFiles!: EntityTable<{ id: string; blob: Blob }, "id">;
 
   constructor(name = "studyflow") {
     super(name);
@@ -15,6 +24,21 @@ export class StudyFlowDB extends Dexie {
       tasks: "id, subjectId, dueAt, done",
       notes: "id, subjectId, updatedAt",
       profile: "id",
+    });
+    // v2: conversas de IA (somente adiciona tabelas; dados da v1 permanecem intactos).
+    this.version(2).stores({
+      conversations: "id, updatedAt",
+      messages: "id, conversationId, createdAt",
+    });
+    // v3: ferramentas de estudo e biblioteca. Textos e arquivos ficam em tabelas separadas para listar sem carregá-los.
+    this.version(3).stores({
+      studySessions: "id, subjectId, startedAt",
+      flashcards: "id, subjectId, dueAt",
+      quizzes: "id, subjectId",
+      quizAttempts: "id, quizId, subjectId, at",
+      documents: "id, subjectId, createdAt",
+      docTexts: "id",
+      docFiles: "id",
     });
   }
 }

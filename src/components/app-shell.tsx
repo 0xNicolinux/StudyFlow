@@ -1,7 +1,7 @@
 "use client";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { Menu, SendHorizontal, X } from "lucide-react";
+import { Menu, Timer, X } from "lucide-react";
 import { db } from "@/lib/db";
 import { deleteSubject } from "@/lib/repo";
 import { Sidebar } from "./sidebar";
@@ -10,7 +10,15 @@ import { HomeDashboard, SubjectDashboard } from "./dashboards";
 import { TasksPanel } from "./tasks-panel";
 import { NotesPanel } from "./notes-panel";
 import { SettingsPanel } from "./settings-panel";
-import { ChatView, type ChatMessage } from "./chat-view";
+import { FocusPanel } from "./focus-panel";
+import { FlashcardsPanel } from "./flashcards-panel";
+import { QuizzesPanel } from "./quizzes-panel";
+import { LibraryPanel } from "./library-panel";
+import { ChatCtx } from "./chat-context";
+import { usePomodoro } from "./use-pomodoro";
+import { ChatView } from "./chat-view";
+import { Composer } from "./composer";
+import { useChat } from "./use-chat";
 import { IconButton, Loading } from "./ui";
 import type { Subject } from "@/lib/schemas";
 
@@ -18,6 +26,10 @@ export type View =
   | { kind: "home" }
   | { kind: "tasks" }
   | { kind: "notes" }
+  | { kind: "focus" }
+  | { kind: "flashcards" }
+  | { kind: "quizzes" }
+  | { kind: "library" }
   | { kind: "settings" }
   | { kind: "subject"; id: string };
 
@@ -25,18 +37,21 @@ const TITLES: Record<Exclude<View["kind"], "subject">, string> = {
   home: "Início",
   tasks: "Tarefas",
   notes: "Anotações",
+  focus: "Foco",
+  flashcards: "Flashcards",
+  quizzes: "Quizzes",
+  library: "Biblioteca de materiais",
   settings: "Configurações",
 };
 
 export function AppShell() {
   const [view, setView] = useState<View>({ kind: "home" });
   const [chatOpen, setChatOpen] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [draft, setDraft] = useState("");
   const [drawer, setDrawer] = useState(false);
   const [dialog, setDialog] = useState<{ open: boolean; subject: Subject | null }>({ open: false, subject: null });
-  const idRef = useRef(0);
 
+  const timer = usePomodoro();
+  const chat = useChat(view.kind === "subject" ? view.id : null);
   const activeSubject = useLiveQuery(async () => (view.kind === "subject" ? ((await db.subjects.get(view.id)) ?? null) : undefined), [view]);
 
   function navigate(v: View) {
@@ -46,36 +61,26 @@ export function AppShell() {
   }
 
   async function removeSubject(s: Subject) {
-    if (!window.confirm(`Excluir "${s.name}"? As tarefas e anotações desta disciplina também serão excluídas.`)) return;
+    if (!window.confirm(`Excluir "${s.name}"? Tarefas, anotações, flashcards, quizzes e materiais desta disciplina também serão excluídos. O tempo de estudo registrado é mantido.`)) return;
     await deleteSubject(s.id);
     if (view.kind === "subject" && view.id === s.id) navigate({ kind: "home" });
-  }
-
-  function send(e: React.FormEvent) {
-    e.preventDefault();
-    const text = draft.trim();
-    if (!text) return;
-    const next = () => String(++idRef.current);
-    setMessages((m) => [
-      ...m,
-      { id: next(), role: "user", text },
-      { id: next(), role: "notice", text: "Nenhum provedor de IA está configurado, então esta mensagem não foi enviada a nenhum serviço. A integração com IA ainda não existe nesta versão." },
-    ]);
-    setDraft("");
-    setChatOpen(true);
   }
 
   const title = chatOpen ? "Conversa" : view.kind === "subject" ? (activeSubject?.name ?? "Disciplina") : TITLES[view.kind];
 
   let content;
-  if (chatOpen) content = <ChatView messages={messages} onBack={() => setChatOpen(false)} />;
+  if (chatOpen) content = <ChatView chat={chat} onBack={() => setChatOpen(false)} onOpenSettings={() => navigate({ kind: "settings" })} />;
   else if (view.kind === "home") content = <HomeDashboard onNavigate={navigate} />;
   else if (view.kind === "tasks") content = <TasksPanel />;
   else if (view.kind === "notes") content = <NotesPanel />;
+  else if (view.kind === "focus") content = <FocusPanel timer={timer} />;
+  else if (view.kind === "flashcards") content = <FlashcardsPanel />;
+  else if (view.kind === "quizzes") content = <QuizzesPanel />;
+  else if (view.kind === "library") content = <LibraryPanel />;
   else if (view.kind === "settings") content = <SettingsPanel />;
   else if (activeSubject === undefined) content = <Loading />;
   else if (activeSubject === null) content = <p className="text-sm text-muted">Esta disciplina não existe mais.</p>;
-  else content = <SubjectDashboard subject={activeSubject} />;
+  else content = <SubjectDashboard key={activeSubject.id} subject={activeSubject} />;
 
   const sidebar = (
     <Sidebar
@@ -88,6 +93,7 @@ export function AppShell() {
   );
 
   return (
+    <ChatCtx.Provider value={chat}>
     <div className="flex h-dvh">
       <aside className="hidden w-72 shrink-0 border-r border-line md:block">{sidebar}</aside>
 
@@ -107,24 +113,19 @@ export function AppShell() {
         <header className="flex items-center gap-2 border-b border-line px-4 py-3">
           <IconButton label="Abrir menu" onClick={() => setDrawer(true)} className="md:hidden"><Menu className="size-5" /></IconButton>
           <h1 className="truncate text-base font-semibold">{title}</h1>
+          {timer.state.status !== "idle" && view.kind !== "focus" && !chatOpen && (
+            <button onClick={() => navigate({ kind: "focus" })} aria-label={`Cronômetro de ${timer.state.phase === "focus" ? "foco" : "descanso"}: ${timer.clock}. Abrir`}
+              className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-line bg-surface-2 px-3 py-1 text-sm tabular-nums hover:bg-surface-3">
+              <Timer className="size-3.5 text-accent" aria-hidden /> {timer.clock}{timer.state.status === "paused" && <span className="text-xs text-muted">pausado</span>}
+            </button>
+          )}
         </header>
 
         <main className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6" id="workspace">
           <div className="mx-auto max-w-5xl">{content}</div>
         </main>
 
-        <form onSubmit={send} className="border-t border-line bg-bg p-3 md:px-6">
-          <div className="mx-auto flex max-w-3xl items-center gap-2 rounded-xl border border-line bg-surface px-3 py-1.5 focus-within:border-accent">
-            <input
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              placeholder="Converse com a IA…"
-              aria-label="Mensagem para a IA"
-              className="min-w-0 flex-1 bg-transparent py-1.5 text-sm placeholder:text-muted/70 focus:outline-none"
-            />
-            <IconButton label="Enviar mensagem" type="submit" disabled={!draft.trim()} className="text-accent disabled:opacity-40"><SendHorizontal className="size-4" /></IconButton>
-          </div>
-        </form>
+        <Composer chat={chat} activeSubjectId={view.kind === "subject" ? view.id : null} onSubmitted={() => setChatOpen(true)} />
       </div>
 
       <SubjectDialog
@@ -134,5 +135,6 @@ export function AppShell() {
         onSaved={(s) => { if (!dialog.subject) navigate({ kind: "subject", id: s.id }); }}
       />
     </div>
+    </ChatCtx.Provider>
   );
 }

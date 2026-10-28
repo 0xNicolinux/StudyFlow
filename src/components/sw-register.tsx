@@ -1,5 +1,6 @@
 "use client";
 import { useEffect } from "react";
+import { loadPdfLib } from "@/lib/docs";
 
 /** Registra o service worker (somente em produção) e pede o cache dos recursos já carregados pela página. */
 export function SwRegister() {
@@ -8,7 +9,9 @@ export function SwRegister() {
     navigator.serviceWorker
       .register("/sw.js")
       .then(() => navigator.serviceWorker.ready)
-      .then((reg) => {
+      .then(async (reg) => {
+        // Baixa o leitor de PDF agora para que importar PDFs também funcione offline depois da primeira visita.
+        await loadPdfLib().catch(() => undefined);
         const urls = performance
           .getEntriesByType("resource")
           .map((e) => e.name)

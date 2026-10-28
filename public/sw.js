@@ -1,5 +1,5 @@
-const CACHE = "studyflow-v1";
-const SHELL = ["/", "/manifest.webmanifest", "/icons/icon.svg"];
+const CACHE = "studyflow-v2";
+const SHELL = ["/", "/manifest.webmanifest", "/icons/icon.svg", "/pdf.worker.min.mjs"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));

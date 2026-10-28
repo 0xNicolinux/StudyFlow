@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Arquivo de terceiros (minificado), copiado por scripts/sync-pdf-worker.mjs.
+    "public/pdf.worker.min.mjs",
   ]),
 ]);
 

@@ -1,6 +1,6 @@
 "use client";
 import { useLiveQuery } from "dexie-react-hooks";
-import { Home, ListChecks, NotebookPen, Pencil, Plus, Settings, Trash2 } from "lucide-react";
+import { BookOpenCheck, Brain, Home, Library, ListChecks, NotebookPen, Pencil, Plus, Settings, Timer, Trash2 } from "lucide-react";
 import { db } from "@/lib/db";
 import { cn } from "@/lib/cn";
 import { initials } from "@/lib/format";
@@ -23,6 +23,10 @@ export function Sidebar({ view, onNavigate, onNewSubject, onEditSubject, onDelet
     { kind: "home", label: "Início", icon: Home },
     { kind: "tasks", label: "Tarefas", icon: ListChecks },
     { kind: "notes", label: "Anotações", icon: NotebookPen },
+    { kind: "focus", label: "Foco", icon: Timer },
+    { kind: "flashcards", label: "Flashcards", icon: Brain },
+    { kind: "quizzes", label: "Quizzes", icon: BookOpenCheck },
+    { kind: "library", label: "Biblioteca", icon: Library },
   ] as const;
 
   return (
