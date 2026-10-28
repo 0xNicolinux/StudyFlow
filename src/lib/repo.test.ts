@@ -9,6 +9,7 @@ import {
   deleteConversation,
   listConversations,
   createNote,
+  createProfilePost,
   createSubject,
   createTask,
   deleteSubject,
@@ -64,17 +65,29 @@ describe("tarefas", () => {
 
 describe("backup", () => {
   it("exporta e reimporta os mesmos dados", async () => {
-    const s = await createSubject({ name: "Física" });
+    const s = await createSubject({ name: "Física", icon: "📘" });
     await createTask({ title: "Prova 1", subjectId: s.id, kind: "avaliacao", dueAt: 1_800_000_000_000 });
     await createNote({ title: "Resumo", subjectId: s.id, body: "# Leis de Newton" });
-    await saveProfile({ name: "Ana", photo: null });
+    await saveProfile({ name: "Ana", photo: "data:video/mp4;base64,AAAA", institution: "UFSE", educationLevel: "superior", graduationYear: 2028, role: "estudante", country: "Brasil" });
+    const post = await createProfilePost({ text: "Primeira publicação", media: null });
     const backup = JSON.stringify(await exportBackup());
 
     __setDb(new StudyFlowDB(`test-${Math.random()}`));
     const result = await importBackup(backup);
     expect(result).toMatchObject({ ok: true, counts: { subjects: 1, tasks: 1, notes: 1 } });
     expect((await db.notes.toArray())[0].body).toBe("# Leis de Newton");
+    expect((await db.subjects.get(s.id))?.icon).toBe("📘");
     expect((await db.profile.get("me"))?.name).toBe("Ana");
+    expect((await db.profile.get("me"))?.institution).toBe("UFSE");
+    expect((await db.profile.get("me"))?.photo).toBe("data:video/mp4;base64,AAAA");
+    expect((await db.posts.get(post.id))?.text).toBe("Primeira publicação");
+  });
+
+  it("aceita backups antigos sem publicações de perfil", async () => {
+    const oldBackup = JSON.stringify({ app: "studyflow", version: 1, exportedAt: 1, data: { subjects: [], tasks: [], notes: [], profile: null } });
+    const result = await importBackup(oldBackup);
+    expect(result.ok).toBe(true);
+    expect(await db.posts.count()).toBe(0);
   });
 
   it("rejeita JSON inválido sem alterar os dados atuais", async () => {
@@ -140,6 +153,16 @@ describe("conversas por disciplina", () => {
     await clearConversations(a.id);
     expect((await db.conversations.toArray()).map((c) => c.title).sort()).toEqual(["b", "g"]);
     expect((await db.messages.toArray()).map((m) => m.content).sort()).toEqual(["b", "g"]);
+  });
+});
+
+describe("identificação da disciplina", () => {
+  it("salva e atualiza o ícone opcional sem quebrar disciplinas antigas", async () => {
+    const plain = await createSubject({ name: "Física" });
+    expect(plain.icon).toBeNull();
+    const custom = await updateSubject(plain.id, { icon: "🧪", color: "#06b6d4" });
+    expect(custom.icon).toBe("🧪");
+    expect(custom.color).toBe("#06b6d4");
   });
 });
 

@@ -6,6 +6,7 @@ import {
   MessageSchema,
   NoteSchema,
   ProfileSchema,
+  PostSchema,
   SubjectSchema,
   TaskSchema,
   type Backup,
@@ -13,16 +14,24 @@ import {
   type Message,
   type Note,
   type Profile,
+  type ProfilePost,
   type Subject,
   type Task,
 } from "./schemas";
 
 const uid = () => crypto.randomUUID();
 
-export const SUBJECT_COLORS = ["#8b7cf6", "#5b9cf5", "#4fc1b0", "#e8b94f", "#e98a6a", "#d47fc4"];
+export const SUBJECT_COLORS = [
+  "#8b7cf6", "#5b9cf5", "#4fc1b0", "#e8b94f", "#e98a6a", "#d47fc4",
+  "#22c55e", "#f43f5e", "#f97316", "#06b6d4", "#a3e635", "#818cf8",
+  "#c084fc", "#fb7185", "#14b8a6", "#facc15", "#64748b", "#ec4899",
+  "#84cc16", "#0ea5e9", "#d946ef", "#78716c",
+  "#f472b6", "#34d399", "#60a5fa", "#fb923c", "#a78bfa", "#2dd4bf",
+  "#f87171", "#c4b5fd", "#bef264", "#38bdf8", "#fda4af", "#d4d4d8",
+];
 
 /* ---------- Disciplinas ---------- */
-export async function createSubject(input: { name: string; color?: string; goals?: string }): Promise<Subject> {
+export async function createSubject(input: { name: string; color?: string; goals?: string; icon?: string | null }): Promise<Subject> {
   const now = Date.now();
   const subject = SubjectSchema.parse({
     id: uid(),
@@ -30,6 +39,7 @@ export async function createSubject(input: { name: string; color?: string; goals
     // Sem cor escolhida, usa a menos repetida entre as disciplinas existentes (em vez de girar pela contagem).
     color: input.color ?? leastUsedColor(SUBJECT_COLORS, (await db.subjects.toArray()).map((x) => x.color)),
     goals: input.goals ?? "",
+    icon: input.icon ?? null,
     createdAt: now,
     updatedAt: now,
   });
@@ -37,7 +47,7 @@ export async function createSubject(input: { name: string; color?: string; goals
   return subject;
 }
 
-export async function updateSubject(id: string, patch: Partial<Pick<Subject, "name" | "color" | "goals">>) {
+export async function updateSubject(id: string, patch: Partial<Pick<Subject, "name" | "color" | "goals" | "icon">>) {
   const current = await db.subjects.get(id);
   if (!current) throw new Error("Disciplina não encontrada");
   const next = SubjectSchema.parse({ ...current, ...patch, updatedAt: Date.now() });
@@ -163,11 +173,52 @@ export async function clearConversations(subjectId: string | null) {
 }
 
 /* ---------- Perfil ---------- */
-export async function saveProfile(input: { name: string; photo: string | null }): Promise<Profile> {
-  const profile = ProfileSchema.parse({ id: "me", ...input });
+export async function saveProfile(input: {
+  name: string;
+  photo: string | null;
+  cover?: string | null;
+  institution?: string;
+  educationLevel?: Profile["educationLevel"];
+  graduationYear?: number | null;
+  role?: Profile["role"];
+  country?: string;
+}): Promise<Profile> {
+  const current = await db.profile.get("me");
+  const profile = ProfileSchema.parse({
+    id: "me",
+    cover: null,
+    institution: "",
+    educationLevel: "superior",
+    graduationYear: null,
+    role: "estudante",
+    country: "Brasil",
+    ...current,
+    ...input,
+  });
   await db.profile.put(profile);
   return profile;
 }
+
+export async function createProfilePost(input: {
+  text: string;
+  media?: string | null;
+  mediaType?: "image" | "video" | null;
+  mediaName?: string | null;
+}): Promise<ProfilePost> {
+  const post = PostSchema.parse({
+    id: uid(),
+    text: input.text,
+    media: input.media ?? null,
+    mediaType: input.mediaType ?? null,
+    mediaName: input.mediaName ?? null,
+    createdAt: Date.now(),
+  });
+  if (!post.text && !post.media) throw new Error("Escreva algo ou anexe uma mídia.");
+  await db.posts.add(post);
+  return post;
+}
+
+export const deleteProfilePost = (id: string) => db.posts.delete(id);
 
 /* ---------- Backup ---------- */
 async function blobToBase64(blob: Blob): Promise<string> {
@@ -186,8 +237,8 @@ function base64ToBlob(b64: string, mime: string): Blob {
 
 /** `includeFiles`: inclui os arquivos originais (base64). Sem isso, o backup leva só metadados e o texto extraído. */
 export async function exportBackup(options: { includeFiles?: boolean } = {}): Promise<Backup> {
-  const [subjects, tasks, notes, profile, conversations, messages, studySessions, flashcards, quizzes, quizAttempts, documents, docTexts] = await Promise.all([
-    db.subjects.toArray(), db.tasks.toArray(), db.notes.toArray(), db.profile.get("me"), db.conversations.toArray(), db.messages.toArray(),
+  const [subjects, tasks, notes, profile, posts, conversations, messages, studySessions, flashcards, quizzes, quizAttempts, documents, docTexts] = await Promise.all([
+    db.subjects.toArray(), db.tasks.toArray(), db.notes.toArray(), db.profile.get("me"), db.posts.toArray(), db.conversations.toArray(), db.messages.toArray(),
     db.studySessions.toArray(), db.flashcards.toArray(), db.quizzes.toArray(), db.quizAttempts.toArray(), db.documents.toArray(), db.docTexts.toArray(),
   ]);
   const docFiles: Backup["data"]["docFiles"] = [];
@@ -198,7 +249,7 @@ export async function exportBackup(options: { includeFiles?: boolean } = {}): Pr
   // Sem os arquivos, os documentos exportados são marcados como "sem original" para a importação ser honesta.
   const docs = documents.map((d) => ({ ...d, hasOriginal: options.includeFiles ? withFile.has(d.id) : false }));
   // A chave de API NUNCA entra no backup (fica só no localStorage).
-  return { app: "studyflow", version: 1, exportedAt: Date.now(), data: { subjects, tasks, notes, profile: profile ?? null, conversations, messages, studySessions, flashcards, quizzes, quizAttempts, documents: docs, docTexts, docFiles } };
+  return { app: "studyflow", version: 1, exportedAt: Date.now(), data: { subjects, tasks, notes, profile: profile ?? null, posts, conversations, messages, studySessions, flashcards, quizzes, quizAttempts, documents: docs, docTexts, docFiles } };
 }
 
 export type ImportResult =
@@ -224,10 +275,10 @@ export async function importBackup(raw: string): Promise<ImportResult> {
   const documents = d.documents.map((doc) => ({ ...doc, hasOriginal: fileIds.has(doc.id) }));
   await db.transaction(
     "rw",
-    [db.subjects, db.tasks, db.notes, db.profile, db.conversations, db.messages, db.studySessions, db.flashcards, db.quizzes, db.quizAttempts, db.documents, db.docTexts, db.docFiles],
+    [db.subjects, db.tasks, db.notes, db.profile, db.posts, db.conversations, db.messages, db.studySessions, db.flashcards, db.quizzes, db.quizAttempts, db.documents, db.docTexts, db.docFiles],
     async () => {
       await Promise.all([
-        db.subjects.clear(), db.tasks.clear(), db.notes.clear(), db.profile.clear(), db.conversations.clear(), db.messages.clear(),
+        db.subjects.clear(), db.tasks.clear(), db.notes.clear(), db.profile.clear(), db.posts.clear(), db.conversations.clear(), db.messages.clear(),
         db.studySessions.clear(), db.flashcards.clear(), db.quizzes.clear(), db.quizAttempts.clear(), db.documents.clear(), db.docTexts.clear(), db.docFiles.clear(),
       ]);
       await db.subjects.bulkAdd(d.subjects); await db.tasks.bulkAdd(d.tasks); await db.notes.bulkAdd(d.notes);
@@ -237,6 +288,7 @@ export async function importBackup(raw: string): Promise<ImportResult> {
       await db.documents.bulkAdd(documents); await db.docTexts.bulkAdd(d.docTexts);
       await db.docFiles.bulkAdd(d.docFiles.map((f) => ({ id: f.id, blob: base64ToBlob(f.base64, f.mime) })));
       if (d.profile) await db.profile.put(d.profile);
+      await db.posts.bulkAdd(d.posts);
     },
   );
   return {

@@ -9,7 +9,7 @@ export function Button({ variant = "subtle", className, ...p }: BtnProps) {
     <button
       {...p}
       className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors disabled:opacity-50 disabled:pointer-events-none",
+        "ui-button inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors disabled:opacity-50 disabled:pointer-events-none",
         variant === "primary" && "bg-accent text-accent-fg hover:brightness-110",
         variant === "subtle" && "bg-surface-2 text-fg hover:bg-surface-3 border border-line",
         variant === "ghost" && "text-muted hover:text-fg hover:bg-surface-2",
@@ -26,7 +26,7 @@ export function IconButton({ label, className, ...p }: ButtonHTMLAttributes<HTML
       {...p}
       aria-label={label}
       title={label}
-      className={cn("inline-flex size-8 items-center justify-center rounded-lg text-muted hover:text-fg hover:bg-surface-2 transition-colors", className)}
+      className={cn("ui-icon-button inline-flex size-8 items-center justify-center rounded-lg text-muted hover:text-fg hover:bg-surface-2 transition-colors", className)}
     />
   );
 }
@@ -35,7 +35,7 @@ export function Input({ className, ...p }: InputHTMLAttributes<HTMLInputElement>
   return (
     <input
       {...p}
-      className={cn("w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-fg placeholder:text-muted/70 focus:border-accent focus:outline-none", className)}
+      className={cn("ui-input w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-fg placeholder:text-muted/70 focus:border-accent focus:outline-none", className)}
     />
   );
 }
@@ -52,7 +52,7 @@ export function Field({ label, error, children }: { label: string; error?: strin
 
 export function EmptyState({ title, hint, action }: { title: string; hint?: string; action?: ReactNode }) {
   return (
-    <div className="rounded-xl border border-dashed border-line px-6 py-10 text-center">
+    <div className="empty-state rounded-xl border border-dashed border-line px-6 py-10 text-center">
       <p className="text-sm font-medium">{title}</p>
       {hint && <p className="mt-1 text-sm text-muted">{hint}</p>}
       {action && <div className="mt-4 flex justify-center">{action}</div>}
@@ -83,7 +83,7 @@ export function Modal({ open, onClose, title, children, wide }: { open: boolean;
       ref={ref}
       onClose={onClose}
       onClick={(e) => { if (e.target === ref.current) onClose(); }}
-      className={cn("m-auto max-h-[90dvh] overflow-y-auto rounded-2xl border border-line bg-surface p-0 text-fg backdrop:bg-black/60", wide ? "w-[min(94vw,52rem)]" : "w-[min(92vw,26rem)]")}
+      className={cn("modal-panel m-auto max-h-[90dvh] overflow-y-auto rounded-2xl border border-line bg-surface p-0 text-fg backdrop:bg-black/60", wide ? "w-[min(94vw,52rem)]" : "w-[min(92vw,26rem)]")}
     >
       {open && (
         <div className="fade-in space-y-4 p-5">

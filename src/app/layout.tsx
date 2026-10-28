@@ -4,12 +4,12 @@ import { SwRegister } from "@/components/sw-register";
 
 export const metadata: Metadata = {
   title: "StudyFlow",
-  description: "Seu ambiente de estudos: disciplinas, anotações, materiais e IA opcional — tudo salvo no seu dispositivo.",
+  description: "Disciplinas, tarefas, anotações e revisões. Seu espaço de estudos, sem ruído.",
   applicationName: "StudyFlow",
   icons: { icon: "/icons/icon.svg", apple: "/icons/icon-192.png" },
 };
 
-export const viewport: Viewport = { themeColor: "#16171b", colorScheme: "dark" };
+export const viewport: Viewport = { themeColor: "#000000", colorScheme: "dark" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

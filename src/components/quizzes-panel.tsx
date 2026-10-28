@@ -35,7 +35,7 @@ export function QuizzesPanel({ subjectId }: { subjectId?: string }) {
             const last = mine[mine.length - 1];
             const subj = subjects.find((s) => s.id === q.subjectId);
             return (
-              <li key={q.id} className="flex flex-wrap items-center gap-3 rounded-xl border border-line bg-surface p-3">
+              <li key={q.id} className="quiz-row flex flex-wrap items-center gap-3 rounded-lg border border-line bg-surface p-3">
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{q.title}</p>
                   <p className="text-xs text-muted">

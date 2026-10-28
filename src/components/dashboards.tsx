@@ -1,6 +1,6 @@
 "use client";
 import { useLiveQuery } from "dexie-react-hooks";
-import { CalendarDays, GraduationCap } from "lucide-react";
+import { BookOpenCheck, CalendarDays, GraduationCap, Timer } from "lucide-react";
 import { db } from "@/lib/db";
 import { formatDay, isOverdue } from "@/lib/format";
 import { cn } from "@/lib/cn";
@@ -23,7 +23,7 @@ import type { View } from "./app-shell";
 
 function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
-    <div className="rounded-xl border border-line bg-surface p-4">
+    <div className="metric-card">
       <p className="text-xs text-muted">{label}</p>
       <p className="mt-1 text-2xl font-semibold tabular-nums">{value}</p>
       {hint && <p className="mt-0.5 text-xs text-muted">{hint}</p>}
@@ -45,7 +45,7 @@ function suggestionView(s: Suggestion): View {
 
 const pct = (tasks: Task[]) => (tasks.length ? Math.round((tasks.filter((t) => t.done).length / tasks.length) * 100) : 0);
 
-export function HomeDashboard({ onNavigate }: { onNavigate: (v: View) => void }) {
+export function HomeDashboard({ onNavigate, onNewSubject }: { onNavigate: (v: View) => void; onNewSubject: () => void }) {
   const tasks = useLiveQuery(() => db.tasks.toArray(), []);
   const subjects = useLiveQuery(() => db.subjects.toArray(), []);
   const sessions = useLiveQuery(() => db.studySessions.toArray(), []);
@@ -61,12 +61,27 @@ export function HomeDashboard({ onNavigate }: { onNavigate: (v: View) => void })
   const upcoming = open.slice(0, 5);
   const subj = (id: string | null) => subjects.find((s) => s.id === id);
 
+  const hero = (
+    <section className="dashboard-hero">
+      <div className="min-w-0">
+        <p className="dashboard-eyebrow">VISÃO GERAL</p>
+        <h2>Seu estudo</h2>
+        <p>Disciplinas, tarefas e revisões em um só lugar.</p>
+      </div>
+      <div className="dashboard-hero-actions">
+        <button onClick={onNewSubject} className="dashboard-hero-primary"><BookOpenCheck className="size-4" aria-hidden /> Nova disciplina</button>
+        <button onClick={() => onNavigate({ kind: "focus" })} className="dashboard-hero-secondary"><Timer className="size-4" aria-hidden /> Iniciar foco</button>
+      </div>
+    </section>
+  );
+
   if (subjects.length === 0 && tasks.length === 0) {
-    return <EmptyState title="Bem-vindo ao StudyFlow" hint="Comece criando uma disciplina no menu lateral (no celular, toque em ☰). Seus dados ficam apenas neste dispositivo." />;
+    return <div className="fade-in space-y-6">{hero}<EmptyState title="Seu espaço começa com uma disciplina" hint="Crie sua primeira disciplina para reunir tarefas, anotações, flashcards e materiais em um só lugar." action={<Button variant="primary" onClick={onNewSubject}>Criar primeira disciplina</Button>} /></div>;
   }
 
   return (
-    <div className="fade-in space-y-6">
+    <div className="fade-in space-y-7">
+      {hero}
       <Suggestions items={suggest({ now, subjects, tasks, cards, quizzes, sessions, adaptive })} onAct={(sg) => onNavigate(suggestionView(sg))} />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
@@ -76,7 +91,7 @@ export function HomeDashboard({ onNavigate }: { onNavigate: (v: View) => void })
             tasks: <Stat key="tasks" label="Tarefas em aberto" value={String(open.length)} />,
             focus: <Stat key="focus" label="Estudo hoje" value={formatDuration(totalSeconds(sessionsSince(sessions, 1, now)))} hint={`${formatDuration(totalSeconds(sessionsSince(sessions, 7, now)))} nos últimos 7 dias`} />,
             flashcards: (
-              <button key="flashcards" onClick={() => onNavigate({ kind: "flashcards" })} className="rounded-xl border border-line bg-surface p-4 text-left transition-colors hover:bg-surface-2">
+              <button key="flashcards" onClick={() => onNavigate({ kind: "flashcards" })} className="metric-card metric-card-clickable">
                 <p className="text-xs text-muted">Revisões pendentes</p><p className="mt-1 text-2xl font-semibold tabular-nums">{dueCount(cards, now)}</p><p className="mt-0.5 text-xs text-muted">{cards.length} cartões no total</p>
               </button>
             ),
@@ -93,10 +108,10 @@ export function HomeDashboard({ onNavigate }: { onNavigate: (v: View) => void })
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <section aria-labelledby="up" className="space-y-2">
+        <section aria-labelledby="up" className="dashboard-section space-y-2">
           <h2 id="up" className="text-sm font-semibold">Próximas tarefas</h2>
           {upcoming.length === 0 ? <p className="text-sm text-muted">Nenhuma tarefa em aberto.</p> : (
-            <ul className="divide-y divide-line rounded-xl border border-line bg-surface">
+            <ul className="dashboard-list divide-y divide-line rounded-xl border border-line bg-surface">
               {upcoming.map((t) => (
                 <li key={t.id} className="flex items-center justify-between gap-3 px-3 py-2.5 text-sm">
                   <span className="truncate">{t.title}</span>
@@ -109,10 +124,10 @@ export function HomeDashboard({ onNavigate }: { onNavigate: (v: View) => void })
           )}
         </section>
 
-        <section aria-labelledby="ex" className="space-y-2">
+        <section aria-labelledby="ex" className="dashboard-section space-y-2">
           <h2 id="ex" className="text-sm font-semibold">Avaliações</h2>
           {exams.length === 0 ? <p className="text-sm text-muted">Nenhuma avaliação com data marcada.</p> : (
-            <ul className="divide-y divide-line rounded-xl border border-line bg-surface">
+            <ul className="dashboard-list divide-y divide-line rounded-xl border border-line bg-surface">
               {exams.map((t) => (
                 <li key={t.id} className="flex items-center justify-between gap-3 px-3 py-2.5 text-sm">
                   <span className="flex min-w-0 items-center gap-2"><GraduationCap className="size-4 shrink-0 text-warning" aria-hidden /><span className="truncate">{t.title}</span></span>
@@ -125,16 +140,16 @@ export function HomeDashboard({ onNavigate }: { onNavigate: (v: View) => void })
       </div>
 
       {subjects.length > 0 && (
-        <section aria-labelledby="sj" className="space-y-2">
+        <section aria-labelledby="sj" className="dashboard-section space-y-2">
           <h2 id="sj" className="text-sm font-semibold">Progresso por disciplina</h2>
           <ul className="grid gap-2 sm:grid-cols-2">
             {subjects.map((s) => {
               const own = tasks.filter((t) => t.subjectId === s.id);
               return (
                 <li key={s.id}>
-                  <button onClick={() => onNavigate({ kind: "subject", id: s.id })} className="w-full rounded-xl border border-line bg-surface p-3 text-left transition-colors hover:bg-surface-2">
+                  <button onClick={() => onNavigate({ kind: "subject", id: s.id })} className="subject-progress-card">
                     <span className="flex items-center justify-between text-sm"><span className="flex items-center gap-2"><span className="size-2.5 rounded-full" style={{ background: s.color }} aria-hidden />{s.name}</span><span className="tabular-nums text-muted">{pct(own)}%</span></span>
-                    <span className="mt-2 block h-1.5 overflow-hidden rounded-full bg-surface-3"><span className="block h-full rounded-full" style={{ width: `${pct(own)}%`, background: s.color }} /></span>
+                    <span className="subject-progress-track mt-2 block overflow-hidden rounded-full bg-surface-3"><span className="block" style={{ width: `${pct(own)}%`, background: s.color }} /></span>
                   </button>
                 </li>
               );
@@ -166,7 +181,7 @@ export function SubjectDashboard({ subject, initialTab, onNavigate }: { subject:
   }
   return (
     <div className="fade-in space-y-5">
-      <div role="tablist" aria-label={`Seções de ${subject.name}`} className="flex gap-1 overflow-x-auto border-b border-line">
+      <div role="tablist" aria-label={`Seções de ${subject.name}`} className="subject-tabs flex gap-1 overflow-x-auto border-b border-line">
         {tabs.map((id) => (
           <button key={id} role="tab" id={`tab-${id}`} aria-selected={tab === id} aria-controls="subject-panel" onClick={() => select(id)}
             className={cn("-mb-px shrink-0 border-b-2 px-3 py-2 text-sm transition-colors", tab === id ? "border-accent text-fg" : "border-transparent text-muted hover:text-fg")}>{TAB_LABEL[id]}</button>
@@ -214,7 +229,7 @@ function Overview({ subject, onTab, onNavigate }: { subject: Subject; onTab: (t:
         <Stat label="Anotações" value={noteCount === undefined ? "—" : String(noteCount)} />
         <Stat label="Materiais" value={docCount === undefined ? "—" : String(docCount)} />
       </div>
-      <section aria-labelledby="rev" className="space-y-2">
+      <section aria-labelledby="rev" className="dashboard-section space-y-2">
         <h2 id="rev" className="text-sm font-semibold">Revisões</h2>
         {cards.length === 0 ? <p className="text-sm text-muted">Crie flashcards para receber revisões agendadas.</p>
           : due === 0 ? <p className="text-sm text-muted">Nenhuma revisão pendente agora.</p>
@@ -227,7 +242,7 @@ function Overview({ subject, onTab, onNavigate }: { subject: Subject; onTab: (t:
 
 function GoalsEditor({ subject }: { subject: Subject }) {
   return (
-    <section aria-labelledby="goals" className="space-y-2">
+    <section aria-labelledby="goals" className="dashboard-section space-y-2">
       <h2 id="goals" className="text-sm font-semibold">Objetivos</h2>
       <textarea
         defaultValue={subject.goals}

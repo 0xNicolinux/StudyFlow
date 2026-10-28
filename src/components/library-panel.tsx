@@ -54,10 +54,20 @@ export function LibraryPanel({ subjectId }: { subjectId?: string }) {
 
   return (
     <section aria-label="Biblioteca de materiais" className="space-y-4">
+      <div className="rounded-lg border border-warning/30 bg-warning/5 p-3 text-sm">
+        <p className="mb-1 flex items-center gap-2 font-medium"><Info className="size-4 shrink-0 text-warning" aria-hidden /> Antes de importar: o que conseguimos ler</p>
+        <ul className="list-disc space-y-1 pl-5 text-muted">
+          <li>PDF: extraímos texto selecionável; PDFs escaneados ou feitos de fotos não funcionam porque não há OCR.</li>
+          <li>PDFs protegidos por senha ou corrompidos não são lidos. Fórmulas, tabelas, colunas e diagramas podem perder a formatação.</li>
+          <li>Limites por arquivo: 30 MB, 400 páginas por PDF e até 2 milhões de caracteres extraídos.</li>
+          <li>Formatos aceitos: PDF, TXT e Markdown. Tudo fica neste dispositivo.</li>
+        </ul>
+        <p className="mt-2 text-xs text-muted">Após importar, abra o material e confira o texto extraído antes de usá-lo para estudar ou como contexto da IA.</p>
+      </div>
       <div
         onDragOver={(e) => { e.preventDefault(); setDragging(true); }} onDragLeave={() => setDragging(false)}
         onDrop={(e) => { e.preventDefault(); setDragging(false); void addFiles(e.dataTransfer.files); }}
-        className={cn("flex flex-wrap items-center gap-3 rounded-xl border border-dashed p-4 transition-colors", dragging ? "border-accent bg-accent/10" : "border-line bg-surface")}
+        className={cn("library-dropzone flex flex-wrap items-center gap-3 rounded-lg border border-dashed p-3 transition-colors", dragging ? "border-accent bg-accent/10" : "border-line bg-surface")}
       >
         <Button variant="primary" onClick={() => inputRef.current?.click()} disabled={!!busy}><Upload className="size-4" aria-hidden /> Importar arquivos</Button>
         <input ref={inputRef} type="file" multiple accept={ACCEPT} className="hidden" aria-label="Selecionar arquivos" onChange={(e) => e.target.files && void addFiles(e.target.files)} />
@@ -83,10 +93,10 @@ export function LibraryPanel({ subjectId }: { subjectId?: string }) {
         : searching && hits === null ? <Loading label="Pesquisando…" />
         : shown.length === 0 ? <p className="text-sm text-muted">Nada encontrado para “{query}”.</p>
         : (
-          <ul className="divide-y divide-line rounded-xl border border-line bg-surface">
+          <ul className="library-list divide-y divide-line rounded-lg border border-line bg-surface">
             {shown.map(({ doc, snippet }) => (
               <li key={doc.id}>
-                <button onClick={() => setOpenId(doc.id)} className="flex w-full items-start gap-3 px-3 py-3 text-left transition-colors hover:bg-surface-2">
+                <button onClick={() => setOpenId(doc.id)} className="library-row flex w-full items-start gap-3 px-3 py-3 text-left transition-colors hover:bg-surface-2">
                   {doc.kind === "pdf" ? <FileType2 className="mt-0.5 size-5 shrink-0 text-danger" aria-hidden /> : <FileText className="mt-0.5 size-5 shrink-0 text-accent" aria-hidden />}
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-medium">{doc.name}</span>
@@ -166,7 +176,7 @@ function ViewerBody({ doc, subjects, onClose }: { doc: StudyDocument; subjects: 
 
       <section aria-label="Texto extraído" className="space-y-2">
         <h3 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted"><FileText className="size-3.5 shrink-0" aria-hidden /> Texto extraído</h3>
-        <p className="text-xs text-muted">{doc.chars.toLocaleString("pt-BR")} caracteres — gerado automaticamente a partir do original; pode conter erros de formatação.</p>
+        <p className="text-xs text-muted">{doc.chars.toLocaleString("pt-BR")} caracteres — extração automática, não uma reprodução fiel do documento. Confira fórmulas, tabelas, colunas e quebras de linha antes de estudar com este texto.</p>
         {doc.status !== "ok" && <p role="status" className="flex items-start gap-2 rounded-lg border border-warning/40 bg-warning/10 p-3"><AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden /> {doc.error}</p>}
         {doc.truncated && <p className="flex items-start gap-2 text-warning"><Info className="mt-0.5 size-4 shrink-0" aria-hidden /> O documento é muito grande; apenas o início foi extraído e guardado.</p>}
         {text === undefined ? <Loading /> : text ? (

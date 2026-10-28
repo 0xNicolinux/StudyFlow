@@ -1,14 +1,12 @@
 "use client";
-import { useState } from "react";
+
 import { useLiveQuery } from "dexie-react-hooks";
 import { BookOpenCheck, Brain, Home, Library, ListChecks, NotebookPen, Pencil, Pin, Plus, Settings, Timer, Trash2 } from "lucide-react";
 import { db } from "@/lib/db";
 import { cn } from "@/lib/cn";
-import { initials } from "@/lib/format";
-import { rankPanels, type PanelId } from "@/lib/adaptive";
+import { readableOn } from "@/lib/adaptive";
 import { IconButton } from "./ui";
-import { useAdaptive } from "./use-adaptive";
-import { useNow } from "./use-now";
+import { AvatarMedia } from "./avatar-media";
 import type { Subject } from "@/lib/schemas";
 import type { View } from "./app-shell";
 
@@ -26,66 +24,52 @@ type Props = {
   frozen?: boolean;
 };
 
-// Ordem padrão dos painéis (a mesma de antes da personalização); "Início" fica sempre no topo.
-const PANEL_NAV: { kind: PanelId; label: string; icon: typeof Home }[] = [
+// Ordem fixa para preservar a memória muscular: a navegação não muda sozinha.
+// Ordem baseada no fluxo diário: visão geral → execução → estudo ativo → consulta.
+const PANEL_NAV = [
   { kind: "tasks", label: "Tarefas", icon: ListChecks },
-  { kind: "notes", label: "Anotações", icon: NotebookPen },
   { kind: "focus", label: "Foco", icon: Timer },
   { kind: "flashcards", label: "Flashcards", icon: Brain },
   { kind: "quizzes", label: "Quizzes", icon: BookOpenCheck },
+  { kind: "notes", label: "Anotações", icon: NotebookPen },
   { kind: "library", label: "Biblioteca", icon: Library },
-];
-const DEFAULT_ORDER = PANEL_NAV.map((p) => p.kind);
+] as const;
 
 // Rótulos somem (sem sair do DOM, para leitores de tela) quando só o trilho de ícones está visível.
 const fade = (collapsed: boolean) => cn("truncate transition-opacity duration-150", collapsed && "opacity-0");
 
 const ROW = "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors";
 
-export function Sidebar({ view, onNavigate, onNewSubject, onEditSubject, onDeleteSubject, collapsed = false, pin, frozen = false }: Props) {
+export function Sidebar({ view, onNavigate, onNewSubject, onEditSubject, onDeleteSubject, collapsed = false, pin }: Props) {
   const profile = useLiveQuery(() => db.profile.get("me").then((p) => p ?? null), []);
   const subjects = useLiveQuery(() => db.subjects.toArray().then((a) => a.sort((x, y) => x.createdAt - y.createdAt)), []);
-  const adaptive = useAdaptive();
-  const now = useNow(3_600_000);
-
-  const live = rankPanels(DEFAULT_ORDER, adaptive.panels, now);
-  // Ajuste de estado durante a renderização (padrão do React): adota a nova ordem só quando o mouse sai da barra.
-  const [order, setOrder] = useState(live);
-  if (!frozen && order.join() !== live.join()) setOrder(live);
-  const nav = [{ kind: "home" as const, label: "Início", icon: Home }, ...order.map((k) => PANEL_NAV.find((p) => p.kind === k)!)];
+  const nav = [{ kind: "home" as const, label: "Início", icon: Home }, ...PANEL_NAV];
 
   return (
     <div className="flex h-full w-full flex-col bg-surface">
-      {pin && (
-        <div className="flex items-center gap-2 px-3 pt-3">
-          <IconButton label="Fixar barra lateral" aria-pressed={pin.pinned} onClick={pin.onToggle} className={cn(pin.pinned && "bg-accent/15 text-accent hover:bg-accent/25")}>
+      <div className={cn("sidebar-profile-row flex items-center gap-1", collapsed ? "mx-2 my-3 justify-center" : "mx-3 mb-3 mt-2")}>
+        <button
+          onClick={() => onNavigate({ kind: "profile" })}
+          className={cn("sidebar-profile flex min-w-0 items-center gap-3 text-left", view.kind === "profile" && "is-active", collapsed ? "justify-center" : "flex-1")}
+          aria-label="Abrir perfil"
+          title={collapsed ? profile?.name ?? "Estudante" : undefined}
+        >
+          <span className={cn("sidebar-avatar size-9 shrink-0 overflow-hidden rounded-full", !profile?.photo && "flex items-center justify-center bg-accent/20 text-sm font-semibold text-accent")}>
+            <AvatarMedia media={profile?.photo} name={profile?.name ?? "Estudante"} className="size-full object-cover" />
+          </span>
+          {!collapsed && (
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-sm font-medium">{profile?.name ?? "Estudante"}</span>
+              <span className="block text-xs text-muted">Perfil local</span>
+            </span>
+          )}
+        </button>
+        {pin && !collapsed && (
+          <IconButton label="Fixar barra lateral" aria-pressed={pin.pinned} onClick={pin.onToggle} className={cn(pin.pinned && "text-fg")}>
             <Pin className={cn("size-4 transition-transform", pin.pinned ? "fill-current" : "rotate-45")} aria-hidden />
           </IconButton>
-          <span className={cn(fade(collapsed), "text-sm font-semibold")}>StudyFlow</span>
-        </div>
-      )}
-
-      <button
-        onClick={() => onNavigate({ kind: "settings" })}
-        className={cn(
-          "flex items-center gap-3 rounded-xl border text-left transition-[margin,padding,background-color,border-color]",
-          collapsed ? "mx-2.5 my-3 border-transparent bg-transparent p-0" : "m-3 border-line bg-surface-2 p-2.5 hover:bg-surface-3",
         )}
-        aria-label="Perfil e configurações"
-      >
-        {profile?.photo ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={profile.photo} alt="" className="size-9 shrink-0 rounded-full object-cover" />
-        ) : (
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-accent/20 text-sm font-semibold text-accent">
-            {initials(profile?.name ?? "Estudante")}
-          </span>
-        )}
-        <span className={cn("min-w-0 transition-opacity duration-150", collapsed && "opacity-0")}>
-          <span className="block truncate text-sm font-medium">{profile?.name ?? "Estudante"}</span>
-          <span className="block text-xs text-muted">Perfil local</span>
-        </span>
-      </button>
+      </div>
 
       <nav aria-label="Principal" className="space-y-0.5 px-2">
         {nav.map(({ kind, label, icon: Icon }) => (
@@ -93,20 +77,22 @@ export function Sidebar({ view, onNavigate, onNewSubject, onEditSubject, onDelet
             key={kind}
             onClick={() => onNavigate({ kind })}
             aria-current={view.kind === kind ? "page" : undefined}
-            className={cn(ROW, view.kind === kind ? "bg-surface-3 text-fg" : "text-muted hover:bg-surface-2 hover:text-fg")}
+            className={cn(ROW, "sidebar-nav-item", view.kind === kind ? "text-fg" : "", collapsed && "justify-center px-0")}
           >
-            <Icon className="size-4 shrink-0" aria-hidden /> <span className={fade(collapsed)}>{label}</span>
+            <Icon className="size-4 shrink-0" aria-hidden /> <span className={cn(fade(collapsed), collapsed && "w-0")}>{label}</span>
           </button>
         ))}
       </nav>
 
-      <div className="mx-3 mt-3 border-t border-line" />
-      <div className={cn("mt-2 flex items-center justify-between px-5 transition-opacity", collapsed && "opacity-0")}>
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-muted">Disciplinas</h2>
-        <IconButton label="Nova disciplina" onClick={onNewSubject}><Plus className="size-4" /></IconButton>
-      </div>
+      <div className="h-3 shrink-0" />
+      {!collapsed && (
+        <div className="mt-1 flex items-center justify-between px-2">
+          <h2 className="sidebar-section-label">Disciplinas</h2>
+          <IconButton label="Nova disciplina" onClick={onNewSubject}><Plus className="size-4" /></IconButton>
+        </div>
+      )}
 
-      <div className="mt-1 min-h-0 flex-1 space-y-0.5 overflow-y-auto px-2 pb-3">
+      <div className={cn("mt-0.5 min-h-0 space-y-0 overflow-y-auto px-1.5 pb-1.5", collapsed ? "max-h-[42%] flex-none" : "flex-1")}>
         {subjects === undefined && <div className="h-9 animate-pulse rounded-lg bg-surface-2" />}
         {subjects?.length === 0 && (
           <p className={cn("px-3 py-3 text-sm text-muted transition-opacity", collapsed && "opacity-0")}>Nenhuma disciplina ainda. Use o botão + para criar a primeira.</p>
@@ -114,31 +100,44 @@ export function Sidebar({ view, onNavigate, onNewSubject, onEditSubject, onDelet
         {subjects?.map((s) => {
           const active = view.kind === "subject" && view.id === s.id;
           return (
-            <div key={s.id} className={cn("group flex items-center rounded-lg transition-colors", active ? "bg-surface-3" : "hover:bg-surface-2")}>
+            <div key={s.id} className={cn("sidebar-subject-item group flex items-center rounded-lg transition-colors", active ? "is-active" : "")}>
               <button
                 onClick={() => onNavigate({ kind: "subject", id: s.id })}
                 aria-current={active ? "page" : undefined}
-                className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2 text-left text-sm"
+                className={cn("flex min-w-0 flex-1 items-center gap-2 px-2 py-1.5 text-left text-[13px]", collapsed && "w-full justify-center gap-0 px-0")}
               >
-                <span className="flex size-4 shrink-0 items-center justify-center"><span className="size-2.5 rounded-full" style={{ background: s.color }} aria-hidden /></span>
-                <span className={cn(fade(collapsed), active ? "text-fg" : "text-muted group-hover:text-fg")}>{s.name}</span>
+                <span className="flex size-5 shrink-0 items-center justify-center overflow-hidden rounded-[4px] text-[10px] font-medium" style={{ background: s.color, color: readableOn(s.color) }} aria-hidden>
+                  {s.icon?.startsWith("data:image/") ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={s.icon} alt="" className="size-full object-cover" />
+                  ) : s.icon ? s.icon : s.name.trim().slice(0, 1).toLocaleUpperCase("pt-BR")}
+                </span>
+                <span className={cn(fade(collapsed), active ? "text-fg" : "text-muted group-hover:text-fg", collapsed && "w-0")}>{s.name}</span>
               </button>
-              <span className="flex pr-1 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100 max-md:opacity-100">
-                <IconButton label={`Editar ${s.name}`} onClick={() => onEditSubject(s)}><Pencil className="size-3.5" /></IconButton>
-                <IconButton label={`Excluir ${s.name}`} onClick={() => onDeleteSubject(s)}><Trash2 className="size-3.5" /></IconButton>
-              </span>
+              {!collapsed && (
+                <span className="flex pr-1 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100 max-md:opacity-100">
+                  <IconButton label={`Editar ${s.name}`} onClick={() => onEditSubject(s)}><Pencil className="size-3.5" /></IconButton>
+                  <IconButton label={`Excluir ${s.name}`} onClick={() => onDeleteSubject(s)}><Trash2 className="size-3.5" /></IconButton>
+                </span>
+              )}
             </div>
           );
         })}
       </div>
 
-      <div className="border-t border-line p-2">
+      {collapsed && (
+        <div className="flex justify-center px-2 pb-2">
+          <IconButton label="Nova disciplina" onClick={onNewSubject}><Plus className="size-4" /></IconButton>
+        </div>
+      )}
+
+      <div className="sidebar-footer mt-auto border-t border-line p-2">
         <button
           onClick={() => onNavigate({ kind: "settings" })}
           aria-current={view.kind === "settings" ? "page" : undefined}
-          className={cn(ROW, view.kind === "settings" ? "bg-surface-3" : "text-muted hover:bg-surface-2 hover:text-fg")}
+          className={cn(ROW, "sidebar-nav-item", view.kind === "settings" ? "text-fg" : "", collapsed && "justify-center px-0")}
         >
-          <Settings className="size-4 shrink-0" aria-hidden /> <span className={fade(collapsed)}>Configurações</span>
+          <Settings className="size-4 shrink-0" aria-hidden /> <span className={cn(fade(collapsed), collapsed && "w-0")}>Configurações</span>
         </button>
       </div>
     </div>

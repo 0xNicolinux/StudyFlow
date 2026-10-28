@@ -12,6 +12,7 @@ import { HomeDashboard, SubjectDashboard, TAB_PANEL, type SubjectTab } from "./d
 import { TasksPanel } from "./tasks-panel";
 import { NotesPanel } from "./notes-panel";
 import { SettingsPanel } from "./settings-panel";
+import { ProfilePanel } from "./profile-panel";
 import { FocusPanel } from "./focus-panel";
 import { FlashcardsPanel } from "./flashcards-panel";
 import { QuizzesPanel } from "./quizzes-panel";
@@ -23,6 +24,8 @@ import { Composer } from "./composer";
 import { useChat } from "./use-chat";
 import { useSidebar } from "./use-sidebar";
 import { trackPanel, trackSubject, untrackSubject } from "./use-adaptive";
+import { themeStore } from "@/lib/theme-pref";
+import { useLocalStore } from "./use-local-store";
 import { IconButton, Loading } from "./ui";
 import type { Subject } from "@/lib/schemas";
 
@@ -35,6 +38,7 @@ export type View =
   | { kind: "quizzes" }
   | { kind: "library" }
   | { kind: "settings" }
+  | { kind: "profile" }
   | { kind: "subject"; id: string; tab?: SubjectTab };
 
 const TITLES: Record<Exclude<View["kind"], "subject">, string> = {
@@ -46,6 +50,7 @@ const TITLES: Record<Exclude<View["kind"], "subject">, string> = {
   quizzes: "Quizzes",
   library: "Biblioteca de materiais",
   settings: "Configurações",
+  profile: "Perfil",
 };
 
 export function AppShell() {
@@ -55,6 +60,7 @@ export function AppShell() {
   const [dialog, setDialog] = useState<{ open: boolean; subject: Subject | null }>({ open: false, subject: null });
 
   const side = useSidebar();
+  const { accent: preferredAccent } = useLocalStore(themeStore);
   const timer = usePomodoro();
   const chat = useChat(view.kind === "subject" ? view.id : null);
   const activeSubject = useLiveQuery(async () => (view.kind === "subject" ? ((await db.subjects.get(view.id)) ?? null) : undefined), [view]);
@@ -63,7 +69,7 @@ export function AppShell() {
     // Registra só no aparelho: alimenta a ordem dos painéis e as sugestões (clicar no item já aberto não conta).
     if (v.kind !== view.kind || (v.kind === "subject" && view.kind === "subject" && v.id !== view.id)) {
       if (v.kind === "subject") trackSubject(v.id);
-      else if (v.kind !== "home" && v.kind !== "settings") trackPanel(v.kind);
+      else if (v.kind !== "home" && v.kind !== "settings" && v.kind !== "profile") trackPanel(v.kind);
     }
     if (v.kind === "subject" && v.tab && TAB_PANEL[v.tab]) trackPanel(TAB_PANEL[v.tab]!, v.id);
     setView(v);
@@ -82,7 +88,7 @@ export function AppShell() {
 
   let content;
   if (chatOpen) content = <ChatView chat={chat} subjectId={view.kind === "subject" ? view.id : null} onBack={() => setChatOpen(false)} onOpenSettings={() => navigate({ kind: "settings" })} />;
-  else if (view.kind === "home") content = <HomeDashboard onNavigate={navigate} />;
+  else if (view.kind === "home") content = <HomeDashboard onNavigate={navigate} onNewSubject={() => setDialog({ open: true, subject: null })} />;
   else if (view.kind === "tasks") content = <TasksPanel />;
   else if (view.kind === "notes") content = <NotesPanel />;
   else if (view.kind === "focus") content = <FocusPanel timer={timer} />;
@@ -90,6 +96,7 @@ export function AppShell() {
   else if (view.kind === "quizzes") content = <QuizzesPanel />;
   else if (view.kind === "library") content = <LibraryPanel />;
   else if (view.kind === "settings") content = <SettingsPanel />;
+  else if (view.kind === "profile") content = <ProfilePanel />;
   else if (activeSubject === undefined) content = <Loading />;
   else if (activeSubject === null) content = <p className="text-sm text-muted">Esta disciplina não existe mais.</p>;
   else content = <SubjectDashboard key={activeSubject.id} subject={activeSubject} initialTab={view.kind === "subject" ? view.tab : undefined} onNavigate={navigate} />;
@@ -103,26 +110,27 @@ export function AppShell() {
   };
 
   // Ao entrar numa disciplina, o acento da área de trabalho assume a cor dela (botões, abas, foco).
-  const accent: CSSProperties | undefined = view.kind === "subject" && activeSubject
+  const globalTheme: CSSProperties = { "--accent": preferredAccent, "--accent-fg": readableOn(preferredAccent) } as CSSProperties;
+  const accent: CSSProperties = view.kind === "subject" && activeSubject
     ? ({ "--accent": activeSubject.color, "--accent-fg": readableOn(activeSubject.color) } as CSSProperties)
-    : undefined;
+    : ({ "--accent": preferredAccent, "--accent-fg": readableOn(preferredAccent) } as CSSProperties);
 
   return (
     <ChatCtx.Provider value={chat}>
-    <div className="flex h-dvh">
+    <div className="app-shell-root flex h-dvh" style={globalTheme}>
       {/* Reserva o espaço no layout (largo se fixada, só o trilho se não); a barra em si flutua por cima ao expandir. */}
       <div className={cn("relative hidden shrink-0 md:block", side.animate && "transition-[width] duration-200 ease-out", side.pinned ? "w-72" : "w-14")}>
         <aside
           aria-label="Barra lateral"
           {...side.handlers}
           className={cn(
-            "absolute inset-y-0 left-0 z-30 overflow-hidden border-r border-line bg-surface",
+            "app-sidebar absolute inset-y-0 left-0 z-30 overflow-hidden border-r border-line bg-surface",
             side.animate && "transition-[width,box-shadow] duration-200 ease-out",
             side.expanded ? "w-72" : "w-14",
             side.expanded && !side.pinned && "shadow-2xl shadow-black/50",
           )}
         >
-          <div className="h-full w-72">
+          <div className={cn("h-full", side.expanded ? "w-72" : "w-14")}>
             <Sidebar {...sidebarProps} collapsed={!side.expanded} frozen={side.pointerInside} pin={{ pinned: side.pinned, onToggle: side.togglePin }} />
           </div>
         </aside>
@@ -131,7 +139,7 @@ export function AppShell() {
       {drawer && (
         <div className="fixed inset-0 z-40 md:hidden" role="dialog" aria-modal="true" aria-label="Menu">
           <div className="absolute inset-0 bg-black/60" onClick={() => setDrawer(false)} />
-          <aside className="fade-in absolute inset-y-0 left-0 flex w-[min(85vw,20rem)] flex-col border-r border-line bg-surface shadow-xl">
+          <aside className="app-sidebar fade-in absolute inset-y-0 left-0 flex w-[min(85vw,20rem)] flex-col border-r border-line bg-surface shadow-xl">
             <div className="flex justify-end px-2 pt-2">
               <IconButton label="Fechar menu" onClick={() => setDrawer(false)}><X className="size-4" /></IconButton>
             </div>
@@ -141,13 +149,25 @@ export function AppShell() {
       )}
 
       <div className="flex min-w-0 flex-1 flex-col" style={accent}>
-        <header className="flex items-center gap-2 border-b border-line px-4 py-3">
+        <header className="app-topbar flex items-center gap-3 border-b border-line px-4 py-3 md:px-6">
           <IconButton label="Abrir menu" onClick={() => setDrawer(true)} className="md:hidden"><Menu className="size-5" /></IconButton>
-          <h1 className="truncate text-base font-semibold">{title}</h1>
-          <div className="ml-auto flex items-center gap-2">
+          <div className="min-w-0">
+            <div className="flex min-w-0 items-center gap-2">
+              {view.kind === "subject" && activeSubject && (
+                <span className="discipline-title-mark flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-md text-xs font-semibold" style={{ background: activeSubject.color, color: readableOn(activeSubject.color) }} aria-hidden>
+                  {activeSubject.icon?.startsWith("data:image/") ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={activeSubject.icon} alt="" className="size-full object-cover" />
+                  ) : activeSubject.icon ? activeSubject.icon : activeSubject.name.trim().slice(0, 1).toLocaleUpperCase("pt-BR")}
+                </span>
+              )}
+              <h1 className="truncate text-base font-semibold">{title}</h1>
+            </div>
+          </div>
+          <div className="ml-auto flex shrink-0 items-center gap-2">
             {timer.state.status !== "idle" && view.kind !== "focus" && !chatOpen && (
               <button onClick={() => navigate({ kind: "focus" })} aria-label={`Cronômetro de ${timer.state.phase === "focus" ? "foco" : "descanso"}: ${timer.clock}. Abrir`}
-                className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface-2 px-3 py-1 text-sm tabular-nums hover:bg-surface-3">
+                className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface-2 px-3 py-1.5 text-sm tabular-nums transition-colors hover:bg-surface-3">
                 <Timer className="size-3.5 text-accent" aria-hidden /> {timer.clock}{timer.state.status === "paused" && <span className="text-xs text-muted">pausado</span>}
               </button>
             )}
@@ -157,11 +177,11 @@ export function AppShell() {
           </div>
         </header>
 
-        <main className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6" id="workspace">
-          <div className="mx-auto max-w-5xl">{content}</div>
+        <main className="app-workspace min-h-0 flex-1 overflow-y-auto p-4 md:p-7 xl:p-8" id="workspace">
+          <div className="workspace-content">{content}</div>
         </main>
 
-        <Composer chat={chat} activeSubjectId={view.kind === "subject" ? view.id : null} onSubmitted={() => setChatOpen(true)} />
+        {(view.kind !== "profile" || chatOpen) && <Composer chat={chat} activeSubjectId={view.kind === "subject" ? view.id : null} onSubmitted={() => setChatOpen(true)} />}
       </div>
 
       <SubjectDialog
