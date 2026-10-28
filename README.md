@@ -29,6 +29,11 @@ Configure em Configurações → Inteligência artificial: chave própria, model
 fora do IndexedDB e fora do backup. Nada é enviado sem confirmação; o conteúdo exato (mensagem, anotações selecionadas, histórico)
 é mostrado antes do envio. Sem chave, o app segue funcionando e o chat avisa que a IA não está configurada.
 
+## Perfil e mural local
+- O perfil do estudante é separado de Configurações e aceita foto, capa com imagem/GIF/vídeo curto, instituição, nível de ensino, ano de conclusão, papel e país.
+- O mural permite publicações locais com texto, imagens, GIFs e vídeos curtos. Nesta etapa, o conteúdo fica só no dispositivo e entra no backup; não existe publicação pública, sincronização ou interação entre contas.
+- Configurações inclui a escolha da cor de destaque global; dentro de uma disciplina, o acento da própria disciplina prevalece.
+
 ## Barra lateral, personalização e conversas
 - **Barra lateral (desktop):** o botão de fixar (alfinete) mantém a barra expandida mesmo com o mouse fora. Desafixada, ela recolhe para um trilho de ícones e expande por cima do conteúdo ao passar o mouse pela borda (ou ao focar com o Tab). O estado do botão e a escolha ficam salvos no dispositivo. No celular continua o menu em gaveta.
 - **Personalização adaptativa:** o app registra, só no aparelho, quais painéis e disciplinas você abre. Com isso ele (1) ordena as abas de cada disciplina e os indicadores do Início; (2) mostra "Sugestões para agora" (tarefas atrasadas, avaliação próxima sem quiz, revisões, retomar a última disciplina, foco); (3) usa a cor da disciplina como acento da área de trabalho e sugere a cor menos usada ao criar uma nova. O menu só se reordena quando o mouse sai dele, e as abas só ao abrir a disciplina, para nada se mover sob o cursor. Configurações → Personalização apaga esse histórico.
