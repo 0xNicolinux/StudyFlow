@@ -32,7 +32,22 @@ export const NoteSchema = z.object({
 export const ProfileSchema = z.object({
   id: z.literal("me"),
   name: z.string().trim().min(1).max(60),
-  photo: z.string().max(700_000).nullable(),
+  photo: z.string().max(1_200_000).nullable(),
+  cover: z.string().max(4_200_000).nullable().optional(),
+  institution: z.string().trim().max(120).optional(),
+  educationLevel: z.enum(["fundamental", "medio", "tecnico", "superior", "pos", "outro"]).optional(),
+  graduationYear: z.number().int().min(2020).max(2100).nullable().optional(),
+  role: z.enum(["estudante", "professor"]).optional(),
+  country: z.string().trim().max(60).optional(),
+});
+
+export const PostSchema = z.object({
+  id: z.string().min(1),
+  text: z.string().trim().max(2000),
+  media: z.string().max(4_200_000).nullable().default(null),
+  mediaType: z.enum(["image", "video"]).nullable().default(null),
+  mediaName: z.string().max(255).nullable().default(null),
+  createdAt: z.number(),
 });
 
 export const ConversationSchema = z.object({
@@ -125,6 +140,8 @@ export const BackupSchema = z.object({
     tasks: z.array(TaskSchema),
     notes: z.array(NoteSchema),
     profile: ProfileSchema.nullable(),
+    // Optional for older v1 backups created before the local profile feed existed.
+    posts: z.array(PostSchema).default([]),
     // Opcionais: backups antigos (sem conversas) continuam válidos.
     conversations: z.array(ConversationSchema).default([]),
     messages: z.array(MessageSchema).default([]),
@@ -143,6 +160,7 @@ export type Subject = z.infer<typeof SubjectSchema>;
 export type Task = z.infer<typeof TaskSchema>;
 export type Note = z.infer<typeof NoteSchema>;
 export type Profile = z.infer<typeof ProfileSchema>;
+export type ProfilePost = z.infer<typeof PostSchema>;
 export type Conversation = z.infer<typeof ConversationSchema>;
 export type Message = z.infer<typeof MessageSchema>;
 export type StudySession = z.infer<typeof StudySessionSchema>;
