@@ -11,6 +11,7 @@ type Props = {
 export function AvatarMedia({ media, name, className = "" }: Props) {
   if (media?.startsWith("data:video/")) {
     return (
+      // eslint-disable-next-line jsx-a11y/media-has-caption
       <video
         className={`avatar-media ${className}`}
         src={media}
