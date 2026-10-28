@@ -82,6 +82,13 @@ describe("backup", () => {
     expect((await db.posts.get(post.id))?.text).toBe("Primeira publicação");
   });
 
+  it("aceita backups antigos sem publicações de perfil", async () => {
+    const oldBackup = JSON.stringify({ app: "studyflow", version: 1, exportedAt: 1, data: { subjects: [], tasks: [], notes: [], profile: null } });
+    const result = await importBackup(oldBackup);
+    expect(result.ok).toBe(true);
+    expect(await db.posts.count()).toBe(0);
+  });
+
   it("rejeita JSON inválido sem alterar os dados atuais", async () => {
     await createSubject({ name: "Intacta" });
     const r = await importBackup("{não é json");
