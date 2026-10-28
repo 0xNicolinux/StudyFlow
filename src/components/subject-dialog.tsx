@@ -81,9 +81,10 @@ function SubjectForm({ subject, onClose, onSaved }: Omit<Props, "open">) {
     }
   }
 
-  const mark = iconMode === "image" && icon?.startsWith("data:image/")
-    ? <img src={icon} alt="" className="size-full object-cover" />
-    : iconMode === "emoji" ? (icon && !icon.startsWith("data:image/") ? icon : SUBJECT_EMOJIS[0])
+  const mark = iconMode === "image" && icon?.startsWith("data:image/") ? (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={icon} alt="" className="size-full object-cover" />
+  ) : iconMode === "emoji" ? (icon && !icon.startsWith("data:image/") ? icon : SUBJECT_EMOJIS[0])
     : (name.trim().slice(0, 1).toLocaleUpperCase("pt-BR") || "?");
 
   return (
