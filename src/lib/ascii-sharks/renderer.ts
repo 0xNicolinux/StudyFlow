@@ -810,7 +810,7 @@ export class AsciiRenderer {
       else if (flag === FLAG_MARK) color = `rgb(${Math.round(70 * tr)},${Math.round(70 * tg)},${Math.round(70 * tb)})`;
       else if (roll < 0.09) color = ACCENTS[key % ACCENTS.length];
       else if (roll < 0.13) color = "#ffffff";
-      else color = shade > 0.55 ? "#0e0f13" : "#1b1d24";
+      else color = shade > 0.55 ? "#030303" : "#08090c";
       ctx.fillStyle = color;
       ctx.fillText(glyph, x + cw / 2, y + ch / 2 + 1);
     }
@@ -859,7 +859,7 @@ export class AsciiRenderer {
       if (h < 0.08) continue;
       const col = i % cols;
       const row = (i / cols) | 0;
-      ctx.fillStyle = h > 0.5 ? `rgba(255,120,60,${h.toFixed(2)})` : `rgba(220,40,40,${(h * 1.6).toFixed(2)})`;
+      ctx.fillStyle = h > 0.5 ? `rgba(112,213,238,${h.toFixed(2)})` : `rgba(83,160,180,${(h * 1.6).toFixed(2)})`;
       ctx.fillText(h > 0.6 ? "*" : "·", col * cw + cw / 2, row * ch + ch / 2 + 1);
     }
   }
