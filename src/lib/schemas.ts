@@ -4,6 +4,8 @@ export const SubjectSchema = z.object({
   id: z.string().min(1),
   name: z.string().trim().min(1, "Informe o nome da disciplina").max(80),
   color: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+  // Opcional para continuar aceitando disciplinas e backups criados em versões anteriores.
+  icon: z.string().max(400_000).nullable().optional(),
   goals: z.string().max(2000).default(""),
   createdAt: z.number(),
   updatedAt: z.number(),
