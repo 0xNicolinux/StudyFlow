@@ -482,6 +482,103 @@ button, a { touch-action: manipulation; }
   .landing-nav-meta { max-width: 150px; }
 }
 
+
+/* Sidebar: o trilho recolhido tem de continuar a ser uma navegação utilizável. */
+.app-sidebar {
+  background: #080808;
+  border-color: #292929;
+}
+.app-sidebar .sidebar-nav-item {
+  display: flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  color: #a4a4a4;
+}
+.app-sidebar .sidebar-nav-item svg {
+  display: block;
+  width: 17px;
+  height: 17px;
+  flex: 0 0 17px;
+  visibility: visible;
+  opacity: 1;
+  color: currentColor;
+}
+.app-sidebar .sidebar-nav-item[aria-current="page"] {
+  color: #9fe9f7;
+  background: #171a1b;
+}
+.app-sidebar .sidebar-profile-row { min-width: 0; }
+.app-sidebar .sidebar-subject-item > button > span:first-child {
+  flex: 0 0 28px;
+}
+
+/* Centered landing: headline and CTA align to the viewport, while ASCII remains full bleed. */
+.landing-copy-overlay {
+  width: 100%;
+  max-width: none;
+  align-self: stretch;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(28px, 5vh, 60px) 24px;
+  text-align: center;
+}
+.landing-copy-overlay .landing-eyebrow {
+  justify-content: center;
+  margin-bottom: clamp(22px, 4vh, 38px);
+}
+.landing-copy-overlay .landing-title {
+  max-width: 100%;
+  font-size: clamp(4.5rem, 10.4vw, 10.5rem);
+  letter-spacing: -.085em;
+  line-height: .9;
+  text-align: center;
+}
+.landing-copy-overlay .landing-subtitle {
+  margin-top: clamp(22px, 3.5vh, 34px);
+  font-size: clamp(1.45rem, 2.7vw, 2.25rem);
+  line-height: 1.22;
+  text-align: center;
+}
+.landing-copy-overlay .landing-enter {
+  align-self: center;
+}
+.landing-copy-overlay .landing-trust {
+  justify-content: center;
+}
+.landing-ocean-shade {
+  background:
+    radial-gradient(ellipse at 50% 48%, rgba(0,0,0,.3) 0%, rgba(0,0,0,.14) 35%, rgba(0,0,0,0) 68%),
+    linear-gradient(0deg, rgba(0,0,0,.72) 0%, rgba(0,0,0,.12) 28%, rgba(0,0,0,.08) 70%, rgba(0,0,0,.35) 100%);
+}
+@media (min-width: 761px) {
+  .landing-copy-overlay { padding-inline: 32px; }
+  .landing-copy-overlay .landing-title { font-size: clamp(6rem, 10.4vw, 10.5rem); }
+}
+@media (max-width: 760px) {
+  .app-sidebar .sidebar-nav-item { min-height: 42px; }
+  .landing-copy-overlay {
+    min-height: calc(100svh - 106px);
+    justify-content: center;
+    padding: 32px 20px;
+  }
+  .landing-copy-overlay .landing-title {
+    font-size: clamp(3.55rem, 13.5vw, 5.5rem);
+    letter-spacing: -.085em;
+    line-height: .95;
+  }
+  .landing-copy-overlay .landing-subtitle {
+    margin-top: 22px;
+    font-size: clamp(1.35rem, 5.7vw, 1.9rem);
+  }
+  .landing-copy-overlay .landing-enter { align-self: center; }
+}
+@media (max-width: 390px) {
+  .landing-copy-overlay .landing-title { font-size: clamp(3rem, 12.5vw, 3.6rem); }
+  .landing-copy-overlay .landing-eyebrow { gap: 8px; font-size: .53rem; }
+}
+
 /* Leitura de Markdown */
 .md { overflow-wrap: anywhere; font-size: .875rem; line-height: 1.65; }
 .md > * + * { margin-top: .75em; }
