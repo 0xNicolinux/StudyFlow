@@ -85,11 +85,11 @@ function Editor({ quiz, subjectId, subjects, onDone }: { quiz: Quiz | null; subj
       {qs.map((q, i) => (
         <fieldset key={i} className="space-y-2 rounded-xl border border-line bg-surface p-3">
           <legend className="px-1 text-xs font-medium text-muted">Pergunta {i + 1}</legend>
-          <Input value={q.prompt} onChange={(e) => upd(i, { prompt: e.target.value })} placeholder="Enunciado" aria-label={`Enunciado da pergunta ${i + 1}`} />
+          <Input value={q.prompt} onChange={(e) => upd(i, { prompt: e.target.value })} maxLength={2000} placeholder="Enunciado" aria-label={`Enunciado da pergunta ${i + 1}`} />
           {q.options.map((o, k) => (
             <div key={k} className="flex items-center gap-2">
               <input type="radio" name={`ans-${i}`} checked={q.answer === k} onChange={() => upd(i, { answer: k })} aria-label={`Marcar alternativa ${k + 1} da pergunta ${i + 1} como correta`} className="accent-[var(--accent)]" />
-              <Input value={o} onChange={(e) => upd(i, { options: q.options.map((x, m) => (m === k ? e.target.value : x)) })} placeholder={`Alternativa ${k + 1}`} aria-label={`Alternativa ${k + 1} da pergunta ${i + 1}`} />
+              <Input value={o} onChange={(e) => upd(i, { options: q.options.map((x, m) => (m === k ? e.target.value : x)) })} maxLength={500} placeholder={`Alternativa ${k + 1}`} aria-label={`Alternativa ${k + 1} da pergunta ${i + 1}`} />
               {q.options.length > 2 && <IconButton type="button" label={`Remover alternativa ${k + 1}`} onClick={() => upd(i, { options: q.options.filter((_, m) => m !== k), answer: q.answer === k ? 0 : q.answer > k ? q.answer - 1 : q.answer })}><Trash2 className="size-4" /></IconButton>}
             </div>
           ))}
