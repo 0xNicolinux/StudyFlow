@@ -17,7 +17,7 @@ import { QuizzesPanel } from "./quizzes-panel";
 import { LibraryPanel } from "./library-panel";
 import { Button } from "./ui";
 import { useNow } from "./use-now";
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import type { Subject, Task } from "@/lib/schemas";
 import type { View } from "./app-shell";
 
@@ -241,16 +241,40 @@ function Overview({ subject, onTab, onNavigate }: { subject: Subject; onTab: (t:
 }
 
 function GoalsEditor({ subject }: { subject: Subject }) {
+  const [goals, setGoals] = useState(subject.goals);
+  const [status, setStatus] = useState<"saved" | "saving" | "error">("saved");
+  const savedGoals = useRef(subject.goals);
+
+  async function saveGoals() {
+    if (goals === savedGoals.current) return;
+    setStatus("saving");
+    try {
+      await updateSubject(subject.id, { goals });
+      savedGoals.current = goals;
+      setStatus("saved");
+    } catch {
+      setStatus("error");
+    }
+  }
+
   return (
     <section aria-labelledby="goals" className="dashboard-section space-y-2">
       <h2 id="goals" className="text-sm font-semibold">Objetivos</h2>
       <textarea
-        defaultValue={subject.goals}
-        onBlur={(e) => { if (e.target.value !== subject.goals) void updateSubject(subject.id, { goals: e.target.value }); }}
+        value={goals}
+        maxLength={2000}
+        onChange={(e) => setGoals(e.target.value)}
+        onBlur={() => void saveGoals()}
         placeholder="O que você quer alcançar nesta disciplina?"
         aria-labelledby="goals"
         className="min-h-24 w-full resize-y rounded-xl border border-line bg-surface p-3 text-sm focus:border-accent focus:outline-none"
       />
+      <div className="flex items-center justify-between gap-3">
+        <p role="status" className={`text-xs ${status === "error" ? "text-danger" : "text-muted"}`}>
+          {status === "saved" ? "Salvo neste dispositivo" : status === "saving" ? "Salvando…" : "Erro ao salvar. Tente novamente."}
+        </p>
+        <span className="text-xs text-muted">{goals.length}/2000</span>
+      </div>
     </section>
   );
 }

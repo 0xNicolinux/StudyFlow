@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { Plus, Trash2 } from "lucide-react";
 import { db } from "@/lib/db";
@@ -56,30 +56,79 @@ function NoteEditor({ note }: { note: Note }) {
   const [body, setBody] = useState(note.body);
   const [status, setStatus] = useState<"saved" | "saving" | "error">("saved");
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mounted = useRef(false);
+  const draft = useRef({ title: note.title, body: note.body });
+  const persisted = useRef({ title: note.title, body: note.body });
+  const queue = useRef<Promise<void>>(Promise.resolve());
+
+  const persistDraft = useCallback((next: { title: string; body: string }) => {
+    // Serializa gravações para que um autosave mais antigo não sobrescreva um rascunho mais novo.
+    queue.current = queue.current.catch(() => undefined).then(async () => {
+      await updateNote(note.id, { title: next.title.trim() || "Sem título", body: next.body });
+      persisted.current = next;
+    });
+    return queue.current;
+  }, [note.id]);
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      if (timer.current) clearTimeout(timer.current);
+      timer.current = null;
+      const latest = draft.current;
+      if (latest.title !== persisted.current.title || latest.body !== persisted.current.body) {
+        // Ao trocar de anotação/tela, não descarta a última edição que ainda estava no debounce.
+        void persistDraft(latest).catch(() => undefined);
+      }
+    };
+  }, [persistDraft]);
 
   function schedule(next: { title: string; body: string }) {
+    draft.current = next;
     setStatus("saving");
     if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(async () => {
-      try {
-        await updateNote(note.id, { title: next.title.trim() || "Sem título", body: next.body });
-        setStatus("saved");
-      } catch {
-        setStatus("error");
-      }
+    timer.current = setTimeout(() => {
+      timer.current = null;
+      void persistDraft(next).then(() => {
+        if (mounted.current) setStatus("saved");
+      }).catch(() => {
+        if (mounted.current) setStatus("error");
+      });
     }, 500);
   }
 
   return (
     <div className="fade-in space-y-2">
-      <Input value={title} onChange={(e) => { setTitle(e.target.value); schedule({ title: e.target.value, body }); }} aria-label="Título da anotação" className="text-base font-semibold" />
-      <textarea
-        value={body}
-        onChange={(e) => { setBody(e.target.value); schedule({ title, body: e.target.value }); }}
-        aria-label="Conteúdo da anotação"
-        placeholder="Escreva em Markdown…"
-        className="min-h-[50vh] w-full resize-y rounded-xl border border-line bg-surface p-3 font-mono text-sm leading-relaxed focus:border-accent focus:outline-none"
-      />
+      <div className="space-y-1">
+        <Input
+          value={title}
+          onChange={(e) => {
+            const nextTitle = e.target.value;
+            setTitle(nextTitle);
+            schedule({ title: nextTitle, body: draft.current.body });
+          }}
+          maxLength={200}
+          aria-label="Título da anotação"
+          className="text-base font-semibold"
+        />
+        <p className="text-right text-xs text-muted">{title.length}/200</p>
+      </div>
+      <div className="space-y-1">
+        <textarea
+          value={body}
+          onChange={(e) => {
+            const nextBody = e.target.value;
+            setBody(nextBody);
+            schedule({ title: draft.current.title, body: nextBody });
+          }}
+          maxLength={200000}
+          aria-label="Conteúdo da anotação"
+          placeholder="Escreva em Markdown…"
+          className="min-h-[50vh] w-full resize-y rounded-xl border border-line bg-surface p-3 font-mono text-sm leading-relaxed focus:border-accent focus:outline-none"
+        />
+        <p className="text-right text-xs text-muted">{body.length.toLocaleString("pt-BR")}/200.000</p>
+      </div>
       <p role="status" className={cn("text-xs", status === "error" ? "text-danger" : "text-muted")}>
         {status === "saved" ? "Salvo neste dispositivo" : status === "saving" ? "Salvando…" : "Erro ao salvar. Verifique o armazenamento do navegador."}
       </p>
