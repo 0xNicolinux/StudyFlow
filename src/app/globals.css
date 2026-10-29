@@ -789,3 +789,7 @@ div, main, aside { scrollbar-width: thin; scrollbar-color: #42444f transparent; 
   .profile-composer-avatar { width: 30px; height: 30px; flex-basis: 30px; }
 }
 
+
+/* Equações: KaTeX fornece a tipografia; equações longas não devem quebrar o layout. */
+.md .katex-display { max-width: 100%; overflow-x: auto; overflow-y: hidden; padding-block: .25rem; }
+.md .katex { font-size: 1.02em; }
