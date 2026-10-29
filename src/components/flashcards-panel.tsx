@@ -94,8 +94,8 @@ function EditForm({ card, onDone }: { card: Flashcard; onDone: () => void }) {
   async function save(e: React.FormEvent) { e.preventDefault(); try { await updateFlashcard(card.id, { front, back }); onDone(); } catch { setErr("Preencha a frente e o verso."); } }
   return (
     <form onSubmit={save} className="space-y-3">
-      <Field label="Frente"><textarea className={textarea} rows={3} value={front} onChange={(e) => setFront(e.target.value)} /></Field>
-      <Field label="Verso" error={err}><textarea className={textarea} rows={4} value={back} onChange={(e) => setBack(e.target.value)} /></Field>
+      <Field label="Frente"><textarea className={textarea} rows={3} value={front} onChange={(e) => setFront(e.target.value)} maxLength={2000} /></Field>
+      <Field label={`Verso (${back.length}/4000)`} error={err}><textarea className={textarea} rows={4} value={back} onChange={(e) => setBack(e.target.value)} maxLength={4000} /></Field>
       <div className="flex justify-end gap-2"><Button type="button" variant="ghost" onClick={onDone}>Cancelar</Button><Button type="submit" variant="primary">Salvar</Button></div>
     </form>
   );
