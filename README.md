@@ -35,7 +35,7 @@ fora do IndexedDB e fora do backup. Nada é enviado sem confirmação; o conteú
 
 ## Perfil e mural local
 - O perfil do estudante é separado de Configurações e aceita foto/GIF ou avatar animado em vídeo MP4/WebM de até 2,8 MB; a capa aceita imagem/GIF/vídeo curto de até 3 MB. O perfil também inclui instituição, nível de ensino, ano de conclusão, papel e país.
-- O mural permite publicações locais com texto, imagens, GIFs e vídeos curtos; o conteúdo fica só no dispositivo e entra no backup. Não existe publicação pública, sincronização ou interação entre contas nesta etapa.
+- O mural permite publicações locais com texto, imagens, GIFs e vídeos curtos. Nesta etapa, o conteúdo fica só no dispositivo e entra no backup; não existe publicação pública, sincronização ou interação entre contas.
 - Configurações inclui a escolha da cor de destaque global; dentro de uma disciplina, o acento da própria disciplina prevalece.
 
 ## Barra lateral, personalização e conversas
