@@ -7,7 +7,7 @@ import { db } from "@/lib/db";
 import { createProfilePost, deleteProfilePost, saveProfile } from "@/lib/repo";
 import type { Profile, ProfilePost } from "@/lib/schemas";
 import { Button } from "./ui";
-import { AvatarMedia } from "./avatar-media";
+import { AvatarMedia, VisibleVideo } from "./avatar-media";
 
 const MAX_AVATAR = 2.8 * 1024 * 1024;
 const MAX_COVER = 3 * 1024 * 1024;
@@ -114,8 +114,7 @@ export function ProfilePanel() {
       <section className="profile-hero overflow-hidden rounded-xl border border-line bg-surface">
         <div className="profile-cover">
           {person?.cover?.startsWith("data:video/") ? (
-            // eslint-disable-next-line jsx-a11y/media-has-caption
-            <video className="profile-cover-media" src={person.cover} autoPlay muted loop playsInline aria-label="Vídeo de capa do perfil" />
+            <VisibleVideo src={person.cover} className="profile-cover-media" ariaLabel="Vídeo de capa do perfil" decorative={false} />
           ) : person?.cover ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img className="profile-cover-media" src={person.cover} alt="Capa do perfil" />
