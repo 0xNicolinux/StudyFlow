@@ -8,14 +8,18 @@ Ambiente de estudos local-first (Next.js, TypeScript, Tailwind, Dexie, Zod). Dad
 - A animação é baseada em [stackedlol/ascii-sharks](https://github.com/stackedlol/ascii-sharks); código e licença MIT estão em `src/lib/ascii-sharks/`.
 
 ## Comandos
-- `npm run dev` — desenvolvimento (o service worker só é registrado em produção)
-- `npm test` — testes unitários (dados, backup, IA, SRS, Pomodoro, extração de PDF com fixtures reais)
+- `npm run dev` — desenvolvimento (o service worker só é registrado em produção).
+- `npm test` — testes unitários com Vitest (dados, backup, IA, SRS, Pomodoro e extração de PDF com fixtures reais).
+- `npm run lint` — análise estática com ESLint.
 - `npm run build` — exportação estática em `out/` (pronta para a Vercel). O `prebuild` copia o worker do pdfjs para `public/` (arquivo ignorado pelo git).
-- Testes de navegador (Playwright): sirva `out/` (`cd out && python3 -m http.server 4177`) e rode, com a constante `URL` ajustada à porta:
-  `e2e.py` (geral), `e2e-ai.py` (IA com OpenRouter **simulado**), `e2e-study.py` (foco, flashcards, quizzes, biblioteca, backup), `e2e-offline.py` (importar PDF sem internet) e `e2e-sidebar.py` (fixar/trilho da barra lateral, personalização e conversas por disciplina).
+
+## Testes de navegador
+A suíte E2E antiga em Python foi retirada: ela era executada manualmente, dependia de URLs/portas fixas e continha seletores e nomes de cache desatualizados. Esses scripts não constituíam uma suíte reproduzível ligada aos comandos normais do projeto.
+
+Por enquanto, `npm test` continua sendo a suíte automatizada mantida. A cobertura de navegador deve ser reintroduzida separadamente com Playwright Test, usando seletores voltados ao usuário, isolamento entre testes e um comando reproduzível — sem misturar esse trabalho com os testes unitários já existentes.
 
 ## Status
-Etapas 1–7 implementadas e verificadas, exceto o que está em "Limitações".
+Etapas 1–7 implementadas; consulte as limitações abaixo para os pontos que ainda exigem validação ou suporte adicional.
 
 ## Limitações conhecidas
 - Nunca testado contra o OpenRouter real (sem chave no ambiente de desenvolvimento): o CORS e os modelos reais precisam de conferência manual.
@@ -31,7 +35,7 @@ fora do IndexedDB e fora do backup. Nada é enviado sem confirmação; o conteú
 
 ## Perfil e mural local
 - O perfil do estudante é separado de Configurações e aceita foto/GIF ou avatar animado em vídeo MP4/WebM de até 2,8 MB; a capa aceita imagem/GIF/vídeo curto de até 3 MB. O perfil também inclui instituição, nível de ensino, ano de conclusão, papel e país.
-- O mural permite publicações locais com texto, imagens, GIFs e vídeos curtos. Nesta etapa, o conteúdo fica só no dispositivo e entra no backup; não existe publicação pública, sincronização ou interação entre contas.
+- O mural permite publicações locais com texto, imagens, GIFs e vídeos curtos; o conteúdo fica só no dispositivo e entra no backup. Não existe publicação pública, sincronização ou interação entre contas nesta etapa.
 - Configurações inclui a escolha da cor de destaque global; dentro de uma disciplina, o acento da própria disciplina prevalece.
 
 ## Barra lateral, personalização e conversas
