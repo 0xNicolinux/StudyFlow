@@ -521,6 +521,11 @@ button, a { touch-action: manipulation; }
   opacity: 1;
   color: currentColor;
 }
+
+/* No trilho recolhido, o rótulo invisível não deve empurrar o ícone para o lado. */
+.app-sidebar .sidebar-nav-item.sidebar-nav-item--collapsed {
+  gap: 0;
+}
 .app-sidebar .sidebar-nav-item[aria-current="page"] {
   color: var(--accent);
   background: var(--surface-2);
