@@ -134,7 +134,7 @@ export async function markGenerationViewed(id: string, now = Date.now()): Promis
 }
 
 /** Ao reabrir o app, nenhuma chamada antiga é simulada como concluída ou retomada silenciosamente. */
-export async function recoverInterruptedGenerationJobs(now = Date.now()): Promise<number> {
+export async function recoverInterruptedGenerationJobs(): Promise<number> {
   let recovered = 0;
   await db.transaction("rw", db.generationJobs, async () => {
     const active = await db.generationJobs.where("status").anyOf(["queued", "generating"]).toArray();
