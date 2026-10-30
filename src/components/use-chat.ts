@@ -3,7 +3,7 @@ import { useCallback, useRef, useState } from "react";
 import { db } from "@/lib/db";
 import { addMessage, createConversation } from "@/lib/repo";
 import { AiError } from "@/lib/ai/types";
-import { GenerationToolDefinitions, validateGenerationToolCall, type GenerationKind, type GenerationToolName } from "@/lib/ai/generation";
+import { GenerationToolDefinitions, validateGenerationToolCall, type GenerationToolName } from "@/lib/ai/generation";
 import { enqueueGenerationJob } from "@/lib/generation-jobs";
 import { getProvider } from "@/lib/ai/openai-compatible";
 import { assertReady, loadSettings, saveSettings } from "@/lib/ai/settings";
@@ -51,6 +51,7 @@ export function useChat(activeSubjectId: string | null) {
       const history = (persistUser ? all : all.slice(0, -1)).map((m) => ({ role: m.role, content: m.content }));
       if (persistUser) await addMessage(convId, "user", text);
       const { messages } = buildMessages(history, text, items);
+      messages[0].content += " Quando o estudante solicitar explicitamente a criação de flashcards, quiz ou anotação, use a ferramenta correspondente. Não use ferramentas para perguntas conceituais ou simples pedidos de explicação. Se faltar um assunto essencial, faça uma pergunta de esclarecimento em texto antes de criar. Nunca diga que salvou: apenas solicite a criação; o aplicativo valida e salva.";
       const toolCalls: Array<{ id: string; name: string; arguments: unknown }> = [];
       for await (const event of getProvider(settings.provider).streamChat({
         ...cfg,
