@@ -2,7 +2,7 @@ import "fake-indexeddb/auto";
 import { beforeEach, describe, expect, it } from "vitest";
 import { IDBFactory } from "fake-indexeddb";
 import { StudyFlowDB, db, __setDb } from "../db";
-import { GenerationToolDefinitions, dispatchGenerationTool, validateGenerationToolCall } from "./generation";
+import { GenerationToolDefinitions, dispatchGenerationTool, parseCategoryFallbackText, validateGenerationToolCall } from "./generation";
 
 beforeEach(() => {
   globalThis.indexedDB = new IDBFactory();
@@ -54,6 +54,23 @@ describe("generation tools", () => {
     }, null)).rejects.toThrow();
     await expect(dispatchGenerationTool("create_flashcards", { title: "Vazio", cards: [] }, null)).rejects.toThrow();
     expect([await db.flashcards.count(), await db.quizzes.count(), await db.notes.count()]).toEqual([0, 0, 0]);
+  });
+
+  it("parses strict JSON or a JSON code fence for guided category fallback", () => {
+    const json = JSON.stringify({ title: "POO", cards: [{ front: "Classe?", back: "Um molde." }] });
+    expect(parseCategoryFallbackText("create_flashcards", json)).toEqual({
+      title: "POO",
+      cards: [{ front: "Classe?", back: "Um molde." }],
+    });
+    expect(parseCategoryFallbackText("create_flashcards", ```json\\n${json}\\n```)).toEqual({
+      title: "POO",
+      cards: [{ front: "Classe?", back: "Um molde." }],
+    });
+  });
+
+  it("rejects prose and malformed output in guided category fallback", () => {
+    expect(() => parseCategoryFallbackText("create_note", "Aqui está seu resumo: {bad}")).toThrow();
+    expect(() => parseCategoryFallbackText("create_flashcards", JSON.stringify({ title: "Vazio", cards: [] }))).toThrow();
   });
 
   it("enforces per-tool output limits before persistence", () => {
