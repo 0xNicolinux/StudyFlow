@@ -76,26 +76,26 @@ export function GenerationProvider({
   const [dismissed, setDismissed] = useState<Set<string>>(() => new Set());
   const running = useRef(false);
   const abort = useRef<AbortController | null>(null);
+  const mounted = useRef(false);
 
   useEffect(() => {
-    let mounted = true;
+    mounted.current = true;
     void recoverInterruptedGenerationJobs()
       .catch(() => 0)
-      .finally(() => { if (mounted) setReady(true); });
+      .finally(() => { if (mounted.current) setReady(true); });
     return () => {
-      mounted = false;
+      mounted.current = false;
       abort.current?.abort();
     };
   }, []);
 
   useEffect(() => {
     if (!ready || !jobs || running.current || !jobs.some((job) => job.status === "queued")) return;
-    let mounted = true;
     const runNext = async () => {
       running.current = true;
       try {
         const job = await claimNextGenerationJob();
-        if (!job || !mounted) return;
+        if (!job) return;
         setRunningId(job.id);
         const controller = new AbortController();
         abort.current = controller;
@@ -118,11 +118,10 @@ export function GenerationProvider({
         }
       } finally {
         running.current = false;
-        if (mounted) setRunnerCycle((cycle) => cycle + 1);
+        if (mounted.current) setRunnerCycle((cycle) => cycle + 1);
       }
     };
     void runNext();
-    return () => { mounted = false; };
   }, [jobs, ready, runnerCycle]);
 
   const openDialog = useCallback((kind: GenerationKind, subjectId?: string) => {
@@ -243,8 +242,8 @@ export function GenerationProvider({
               </IconButton>
             </div>
             <div className="mt-3 flex justify-end gap-2">
-              {job.status === "failed" && <Button size="sm" variant="ghost" onClick={() => void retry(job.id)}>Tentar novamente</Button>}
-              <Button size="sm" variant="primary" onClick={() => openJob(job)}>
+              {job.status === "failed" && <Button variant="ghost" className="min-h-8 px-2.5 text-xs" onClick={() => void retry(job.id)}>Tentar novamente</Button>}
+              <Button variant="primary" className="min-h-8 px-2.5 text-xs" onClick={() => openJob(job)}>
                 {job.status === "completed" ? "Abrir conteúdo" : "Abrir categoria"} <ExternalLink className="size-3.5" aria-hidden />
               </Button>
             </div>
