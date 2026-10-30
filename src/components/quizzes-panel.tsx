@@ -21,8 +21,8 @@ export function QuizzesPanel({ subjectId }: { subjectId?: string }) {
   const generation = useGeneration();
 
   useEffect(() => {
-    void generation.markKindViewed("quiz");
-  }, [generation.jobs, generation.markKindViewed]);
+    void generation.markKindViewed("quiz", subjectId);
+  }, [generation.jobs, generation.markKindViewed, subjectId]);
 
   useEffect(() => {
     const target = generation.openTarget;
