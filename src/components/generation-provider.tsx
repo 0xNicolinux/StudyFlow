@@ -19,6 +19,12 @@ import { Button, IconButton } from "./ui";
 import { GenerationDialog, type GenerationDialogSubmit } from "./generation-dialog";
 
 type DialogRequest = { kind: GenerationKind; subjectId?: string } | null;
+
+let recoveryPromise: Promise<number> | null = null;
+function ensureGenerationRecovery() {
+  if (!recoveryPromise) recoveryPromise = recoverInterruptedGenerationJobs().catch(() => 0);
+  return recoveryPromise;
+}
 export type GenerationOpenTarget = { kind: GenerationKind; contentId: string; jobId: string } | null;
 
 type GenerationContextValue = {
@@ -26,7 +32,7 @@ type GenerationContextValue = {
   openDialog: (kind: GenerationKind, subjectId?: string) => void;
   openTarget: GenerationOpenTarget;
   clearOpenTarget: () => void;
-  markKindViewed: (kind: GenerationKind) => Promise<void>;
+  markKindViewed: (kind: GenerationKind, subjectId?: string) => Promise<void>;
   retry: (id: string) => Promise<void>;
   enqueueChatToolCall: (input: {
     toolName: string;
@@ -81,8 +87,7 @@ export function GenerationProvider({
 
   useEffect(() => {
     mounted.current = true;
-    void recoverInterruptedGenerationJobs()
-      .catch(() => 0)
+    void ensureGenerationRecovery()
       .finally(() => { if (mounted.current) setReady(true); });
     return () => {
       mounted.current = false;
@@ -129,8 +134,11 @@ export function GenerationProvider({
     setDialog({ kind, subjectId });
   }, []);
 
-  const markKindViewed = useCallback(async (kind: GenerationKind) => {
-    const unseen = await db.generationJobs.filter((job) => job.kind === kind && job.status === "completed" && job.viewedAt === null).toArray();
+  const markKindViewed = useCallback(async (kind: GenerationKind, subjectId?: string) => {
+    const unseen = await db.generationJobs.filter((job) =>
+      job.kind === kind && job.status === "completed" && job.viewedAt === null &&
+      (subjectId === undefined || job.subjectId === subjectId),
+    ).toArray();
     if (!unseen.length) return;
     const now = Date.now();
     await db.generationJobs.bulkPut(unseen.map((job) => ({ ...job, viewedAt: now })));
