@@ -5,6 +5,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { Library, Sparkles } from "lucide-react";
 import { db } from "@/lib/db";
 import { buildContextItems, contextToText } from "@/lib/ai/context";
+import { assertReady, loadSettings, saveSettings } from "@/lib/ai/settings";
 import type { GenerationKind } from "@/lib/ai/generation";
 import { Button, Modal } from "./ui";
 
@@ -36,6 +37,7 @@ export function GenerationDialog({
   const [quantity, setQuantity] = useState("10");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [confirmation, setConfirmation] = useState<{ subjectId: string | null; requestText: string; contextText: string; host: string; model: string } | null>(null);
 
   const subjects = useLiveQuery(() => db.subjects.toArray(), []);
   const subject = subjects?.find((item) => item.id === targetSubjectId) ?? null;
@@ -90,7 +92,16 @@ export function GenerationDialog({
           ? `Crie um quiz com ${count} questões de múltipla escolha, 4 alternativas quando apropriado e uma única resposta correta por questão.`
           : "Crie uma anotação de estudo completa, organizada e didática em Markdown.";
       const requestText = manual.trim() ? `${base}\n\nAssunto ou instruções do estudante:\n${manual.trim()}` : `${base}\n\nUse os materiais selecionados como base principal.`;
-      await onSubmit({ subjectId: targetSubjectId || null, requestText, contextText });
+      const settings = loadSettings();
+      const config = assertReady(settings);
+      const submission = { subjectId: targetSubjectId || null, requestText, contextText };
+      if (items.length > 0 || !settings.consentGiven) {
+        let host = config.baseUrl;
+        try { host = new URL(config.baseUrl).host; } catch { /* assertReady valida o endpoint */ }
+        setConfirmation({ ...submission, host, model: config.model });
+      } else {
+        await onSubmit(submission);
+      }
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Não foi possível iniciar a geração.");
     } finally {
@@ -98,6 +109,24 @@ export function GenerationDialog({
     }
   }
 
+  async function confirmSubmission() {
+    if (!confirmation || saving) return;
+    setSaving(true);
+    setError(null);
+    try {
+      saveSettings({ ...loadSettings(), consentGiven: true });
+      await onSubmit({
+        subjectId: confirmation.subjectId,
+        requestText: confirmation.requestText,
+        contextText: confirmation.contextText,
+      });
+      setConfirmation(null);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Não foi possível iniciar a geração.");
+    } finally {
+      setSaving(false);
+    }
+  }
   return (
     <Modal open onClose={onClose} title={title} wide>
       <form onSubmit={submit} className="space-y-4 text-sm">
@@ -165,12 +194,22 @@ export function GenerationDialog({
             <Button type="button" variant="ghost" onClick={onOpenLibrary}><Library className="size-4" aria-hidden /> Abrir biblioteca</Button>
           </div>
         )}
+        {confirmation && (
+          <div className="space-y-3 rounded-lg border border-line bg-surface-secondary p-3">
+            <p className="text-sm font-medium">Confirmar envio para a IA</p>
+            <p className="text-xs text-muted">O StudyFlow enviará o pedido e somente os materiais que você selecionou para {confirmation.host}, usando o modelo {confirmation.model}. O conteúdo gerado será salvo neste dispositivo.</p>
+            <div className="flex flex-wrap justify-end gap-2">
+              <Button type="button" variant="ghost" onClick={() => setConfirmation(null)}>Voltar</Button>
+              <Button type="button" variant="primary" disabled={saving} onClick={() => void confirmSubmission()}>{saving ? "Enviando…" : "Confirmar e gerar"}</Button>
+            </div>
+          </div>
+        )}
         {error && <p role="alert" className="text-xs text-danger">{error}</p>}
         <div className="flex flex-wrap justify-end gap-2">
           <Button type="button" variant="ghost" onClick={onClose}>Cancelar</Button>
-          <Button type="submit" variant="primary" disabled={saving || !subjects || !notes || !docs}>
+          {!confirmation && <Button type="submit" variant="primary" disabled={saving || !subjects || !notes || !docs}>
             <Sparkles className="size-4" aria-hidden /> {saving ? "Enfileirando…" : `Gerar ${LABEL[request.kind]} com IA`}
-          </Button>
+          </Button>}
         </div>
       </form>
     </Modal>
