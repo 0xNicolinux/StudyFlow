@@ -111,7 +111,7 @@ body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--fo
 .suggestions-panel { overflow: hidden; border: 1px solid var(--border); border-radius: .65rem; background: var(--surface); }
 
 /* Listas: densidade confortável, ações alinhadas e estados discretos */
-.task-create-form, .study-create-form { padding: .75rem 0 1rem; border-color: var(--border); border-radius: .65rem; background: transparent; }
+.task-create-form, .study-create-form { padding: 1.25rem; border-color: var(--border); border-radius: .65rem; background: transparent; }
 .task-rows, .study-rows, .library-list { border-color: var(--border); border-radius: .65rem; background: var(--surface); }
 .task-row, .study-row { min-height: 3.15rem; transition: background-color 120ms ease; }
 .task-row:hover, .study-row:hover, .quiz-row:hover, .library-row:hover { background: var(--surface-2); }
@@ -630,6 +630,7 @@ div, main, aside { scrollbar-width: thin; scrollbar-color: var(--border-strong) 
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { border: 2px solid transparent; border-radius: 99px; background: var(--border-strong); background-clip: padding-box; }
 @media (max-width: 640px) {
+  .task-create-form, .study-create-form { padding: 1rem; }
   .app-topbar { min-height: 60px; }
   .app-workspace { padding: 1rem; }
   .dashboard-hero { align-items: flex-start; }
