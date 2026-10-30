@@ -24,7 +24,7 @@ import { Composer } from "./composer";
 import { useChat } from "./use-chat";
 import { useSidebar } from "./use-sidebar";
 import { trackPanel, trackSubject, untrackSubject } from "./use-adaptive";
-import { themeStore } from "@/lib/theme-pref";
+import { DEFAULT_ACCENT, themeStore } from "@/lib/theme-pref";
 import { useLocalStore } from "./use-local-store";
 import { IconButton, Loading } from "./ui";
 import type { Subject } from "@/lib/schemas";
@@ -60,24 +60,15 @@ export function AppShell() {
   const [dialog, setDialog] = useState<{ open: boolean; subject: Subject | null }>({ open: false, subject: null });
 
   const side = useSidebar();
-  const { accent: preferredAccent, mode, density } = useLocalStore(themeStore);
+  const { mode, density } = useLocalStore(themeStore);
 
   useEffect(() => {
     const root = document.documentElement;
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    const applyTheme = () => {
-      const resolved = mode === "system" ? (media.matches ? "dark" : "light") : mode;
-      root.dataset.theme = resolved;
-      root.style.colorScheme = resolved;
-      root.classList.toggle("dark", resolved === "dark");
-      const themeColor = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
-      if (themeColor) themeColor.content = resolved === "dark" ? "#000000" : "#f5f7fb";
-    };
-
-    applyTheme();
-    if (mode !== "system") return;
-    media.addEventListener("change", applyTheme);
-    return () => media.removeEventListener("change", applyTheme);
+    root.dataset.theme = mode;
+    root.style.colorScheme = mode;
+    root.classList.toggle("dark", mode === "dark");
+    const themeColor = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+    if (themeColor) themeColor.content = mode === "dark" ? "#000000" : "#f5f7fb";
   }, [mode]);
   const timer = usePomodoro();
   const chat = useChat(view.kind === "subject" ? view.id : null);
@@ -128,10 +119,10 @@ export function AppShell() {
   };
 
   // Ao entrar numa disciplina, o acento da área de trabalho assume a cor dela (botões, abas, foco).
-  const globalTheme: CSSProperties = { "--accent": preferredAccent, "--accent-fg": readableOn(preferredAccent) } as CSSProperties;
+  const globalTheme: CSSProperties = { "--accent": DEFAULT_ACCENT, "--accent-fg": readableOn(DEFAULT_ACCENT) } as CSSProperties;
   const accent: CSSProperties = view.kind === "subject" && activeSubject
     ? ({ "--accent": activeSubject.color, "--accent-fg": readableOn(activeSubject.color) } as CSSProperties)
-    : ({ "--accent": preferredAccent, "--accent-fg": readableOn(preferredAccent) } as CSSProperties);
+    : ({ "--accent": DEFAULT_ACCENT, "--accent-fg": readableOn(DEFAULT_ACCENT) } as CSSProperties);
 
   return (
     <ChatCtx.Provider value={chat}>
