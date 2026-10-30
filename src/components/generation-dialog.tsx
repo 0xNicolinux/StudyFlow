@@ -89,7 +89,7 @@ export function GenerationDialog({
         : request.kind === "quiz"
           ? `Crie um quiz com ${count} questões de múltipla escolha, 4 alternativas quando apropriado e uma única resposta correta por questão.`
           : "Crie uma anotação de estudo completa, organizada e didática em Markdown.";
-      const requestText = manual.trim() ? `${base}\\n\\nAssunto ou instruções do estudante:\\n${manual.trim()}` : `${base}\\n\\nUse os materiais selecionados como base principal.`;
+      const requestText = manual.trim() ? `${base}\n\nAssunto ou instruções do estudante:\n${manual.trim()}` : `${base}\n\nUse os materiais selecionados como base principal.`;
       await onSubmit({ subjectId: targetSubjectId || null, requestText, contextText });
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Não foi possível iniciar a geração.");
