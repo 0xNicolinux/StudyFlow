@@ -93,9 +93,9 @@ export function Sidebar({ view, onNavigate, onNewSubject, onEditSubject, onDelet
       )}
 
       <div className={cn("mt-0.5 min-h-0 space-y-0 overflow-y-auto px-1.5 pb-1.5", collapsed ? "max-h-[42%] flex-none" : "flex-1")}>
-        {subjects === undefined && <div className="h-9 animate-pulse rounded-lg bg-surface-2" />}
-        {subjects?.length === 0 && (
-          <p className={cn("px-3 py-3 text-sm text-muted transition-opacity", collapsed && "opacity-0")}>Nenhuma disciplina ainda. Use o botão + para criar a primeira.</p>
+        {subjects === undefined && !collapsed && <div className="h-9 animate-pulse rounded-lg bg-surface-2" />}
+        {subjects?.length === 0 && !collapsed && (
+          <p className="px-3 py-3 text-sm text-muted">Nenhuma disciplina ainda. Use o botão + para criar a primeira.</p>
         )}
         {subjects?.map((s) => {
           const active = view.kind === "subject" && view.id === s.id;
@@ -126,7 +126,7 @@ export function Sidebar({ view, onNavigate, onNewSubject, onEditSubject, onDelet
       </div>
 
       {collapsed && (
-        <div className="flex justify-center px-2 pb-2">
+        <div className="sidebar-collapsed-create mx-2 mt-2 flex justify-center border-t border-line px-2 pb-2 pt-2">
           <IconButton label="Nova disciplina" onClick={onNewSubject}><Plus className="size-4" /></IconButton>
         </div>
       )}
