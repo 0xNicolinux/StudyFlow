@@ -3,7 +3,7 @@ export type ChatTurn = { role: ChatRole; content: string };
 
 export type AiErrorKind =
   | "no_key" | "no_model" | "offline" | "network" | "auth" | "forbidden"
-  | "credits" | "rate_limit" | "bad_request" | "server" | "stream" | "aborted";
+  | "credits" | "rate_limit" | "bad_request" | "server" | "stream" | "aborted" | "tools_unsupported" | "tool_call_invalid";
 
 export class AiError extends Error {
   constructor(public kind: AiErrorKind, message: string) {
@@ -11,6 +11,15 @@ export class AiError extends Error {
     this.name = "AiError";
   }
 }
+
+export type ToolDefinition = {
+  type: "function";
+  function: { name: string; description?: string; parameters: Record<string, unknown>; strict?: boolean };
+};
+export type ToolChoice = "auto" | "none" | "required" | { type: "function"; function: { name: string } };
+export type ChatStreamEvent =
+  | { type: "text"; text: string }
+  | { type: "tool_call"; id: string; name: string; arguments: unknown };
 
 export type StreamRequest = {
   baseUrl: string;
@@ -27,5 +36,5 @@ export interface AiProvider {
   label: string;
   defaultBaseUrl: string;
   editableEndpoint: boolean;
-  streamChat(req: StreamRequest): AsyncGenerator<string, void, void>;
+  streamChat(req: StreamRequest): AsyncGenerator<ChatStreamEvent, void, void>;
 }
