@@ -3,9 +3,11 @@ import { useCallback, useRef, useState } from "react";
 import { db } from "@/lib/db";
 import { addMessage, createConversation } from "@/lib/repo";
 import { AiError } from "@/lib/ai/types";
+import { GenerationToolDefinitions, validateGenerationToolCall, type GenerationKind, type GenerationToolName } from "@/lib/ai/generation";
+import { enqueueGenerationJob } from "@/lib/generation-jobs";
 import { getProvider } from "@/lib/ai/openai-compatible";
 import { assertReady, loadSettings, saveSettings } from "@/lib/ai/settings";
-import { buildContextItems, buildMessages, type ContextItem } from "@/lib/ai/context";
+import { buildContextItems, buildMessages, contextToText, type ContextItem } from "@/lib/ai/context";
 
 export type Excerpt = { id: string; label: string; text: string };
 export type Selection = { useSubject: boolean; noteIds: string[]; docIds: string[]; excerpts: Excerpt[] };
@@ -49,13 +51,59 @@ export function useChat(activeSubjectId: string | null) {
       const history = (persistUser ? all : all.slice(0, -1)).map((m) => ({ role: m.role, content: m.content }));
       if (persistUser) await addMessage(convId, "user", text);
       const { messages } = buildMessages(history, text, items);
-      for await (const delta of getProvider(settings.provider).streamChat({ ...cfg, messages, signal: ctrl.signal })) {
-        acc += delta; setStreamText(acc);
+      const toolCalls: Array<{ id: string; name: string; arguments: unknown }> = [];
+      for await (const event of getProvider(settings.provider).streamChat({
+        ...cfg,
+        messages,
+        tools: GenerationToolDefinitions,
+        toolChoice: "auto",
+        signal: ctrl.signal,
+      })) {
+        if (event.type === "text") {
+          acc += event.text;
+          setStreamText(acc);
+        } else {
+          toolCalls.push(event);
+        }
       }
-      if (acc) await addMessage(convId, "assistant", acc);
-      else throw new AiError("stream", "O modelo não retornou conteúdo. Tente novamente ou troque de modelo.");
+
+      // Valida todas as chamadas primeiro: uma chamada malformada não pode deixar as anteriores parcialmente enfileiradas.
+      const validatedCalls = toolCalls.map((call) => ({
+        ...call,
+        validated: validateGenerationToolCall(call.name, call.arguments),
+      }));
+      if (validatedCalls.length) {
+        const requestId = crypto.randomUUID();
+        const contextText = contextToText(items);
+        for (const call of validatedCalls) {
+          await enqueueGenerationJob({
+            kind: call.validated.kind,
+            title: call.validated.title,
+            subjectId: activeSubjectId,
+            source: "chat",
+            sourceKey: `${convId}:${requestId}:${call.id}`,
+            toolName: call.name as GenerationToolName,
+            payload: call.validated.data,
+            requestText: text,
+            contextText,
+          });
+        }
+        const summary = validatedCalls.map((call) => {
+          const label = call.validated.kind === "flashcards" ? "flashcards" : call.validated.kind === "quiz" ? "quiz" : "anotação";
+          const count = call.validated.kind === "flashcards" ? call.validated.data.cards.length
+            : call.validated.kind === "quiz" ? call.validated.data.questions.length : 1;
+          return `${label} “${call.validated.title}” (${count} ${call.validated.kind === "flashcards" ? "cartões" : call.validated.kind === "quiz" ? "perguntas" : "anotação"})`;
+        }).join(" e ");
+        acc = [acc.trim(), `Estou preparando ${summary}. Avisarei quando estiver pronto.`].filter(Boolean).join("\\n\\n");
+        setStreamText(acc);
+      }
+      if (acc.trim()) await addMessage(convId, "assistant", acc);
+      else throw new AiError("stream", "O modelo não retornou conteúdo nem solicitou uma ação. Tente novamente ou troque de modelo.");
     } catch (e) {
-      const err = e instanceof AiError ? e : new AiError("stream", "Ocorreu um erro inesperado ao falar com a IA.");
+      const original = e instanceof AiError ? e : new AiError("stream", "Ocorreu um erro inesperado ao falar com a IA.");
+      const err = original.kind === "tools_unsupported"
+        ? new AiError("tools_unsupported", "Este modelo não aceita criação direta pela conversa. Abra Flashcards, Quizzes ou Anotações e use “Gerar com IA” para continuar.")
+        : original;
       // Texto parcial já recebido é preservado e marcado como incompleto; nada é fingido como resposta completa.
       if (acc) await addMessage(convId, "assistant", acc, true);
       if (err.kind !== "aborted" || !acc) setError(err);
