@@ -13,7 +13,7 @@ export async function errorFromResponse(res: Response, toolsRequested = false): 
     if (typeof m === "string") detail = m.slice(0, 300);
   } catch { /* corpo não é JSON */ }
   const extra = detail ? ` (${detail})` : "";
-  if (toolsRequested && /tools?[^.]{0,50}(not supported|unsupported)|does not support[^.]{0,50}tools?|tool[_ ]calling[^.]{0,50}(not supported|unsupported)|tool_choice[^.]{0,50}(not supported|unsupported)/i.test(detail)) {
+  if (toolsRequested && /(tool[\\s_-]?(use|calling|calls?|choice)|function[\\s_-]?calling|does not support.{0,50}(tool|function)|no endpoints found.{0,50}tool)/i.test(detail)) {
     return new AiError("tools_unsupported", "Este modelo não oferece suporte a chamadas de ferramentas. Use a criação guiada pela categoria.");
   }
   switch (res.status) {
