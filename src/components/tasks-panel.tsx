@@ -38,22 +38,22 @@ export function TasksPanel({ subjectId }: { subjectId?: string }) {
   const sorted = tasks?.slice().sort((a, b) => Number(a.done) - Number(b.done) || (a.dueAt ?? Infinity) - (b.dueAt ?? Infinity) || a.createdAt - b.createdAt);
 
   return (
-    <section aria-label="Tarefas e avaliações" className="space-y-4">
-      <form onSubmit={add} className="task-create-form space-y-2 rounded-xl border border-line bg-surface p-3">
-        <div className="flex flex-wrap gap-2">
+    <section aria-label="Tarefas e avaliações" className="space-y-6">
+      <form onSubmit={add} className="task-create-form space-y-3 rounded-xl border border-line bg-surface p-5">
+        <div className="flex flex-wrap items-center gap-3">
           <Input className="min-w-48 flex-1" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Nova tarefa ou avaliação" aria-label="Título" maxLength={200} />
-          <select aria-label="Tipo" value={kind} onChange={(e) => setKind(e.target.value as "tarefa" | "avaliacao")} className="rounded-lg border border-line bg-surface px-2 py-2 text-sm">
+          <select aria-label="Tipo" value={kind} onChange={(e) => setKind(e.target.value as "tarefa" | "avaliacao")} className="min-h-10 rounded-lg border border-line bg-surface px-3 py-2 text-sm">
             <option value="tarefa">Tarefa</option>
             <option value="avaliacao">Avaliação</option>
           </select>
-          <Input type="date" aria-label="Prazo" value={due} onChange={(e) => setDue(e.target.value)} className="w-auto" />
+          <Input type="date" aria-label="Prazo" value={due} onChange={(e) => setDue(e.target.value)} className="min-h-10 w-auto" />
           {subjectId === undefined && (
             <select aria-label="Disciplina" value={target} onChange={(e) => setTarget(e.target.value)} className="rounded-lg border border-line bg-surface px-2 py-2 text-sm">
               <option value="">Sem disciplina</option>
               {subjects?.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
           )}
-          <Button type="submit" variant="primary">Adicionar</Button>
+          <Button type="submit" variant="primary" className="min-h-10 px-4">Adicionar</Button>
         </div>
         {error && <p role="alert" className="text-xs text-danger">{error}</p>}
       </form>
