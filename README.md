@@ -1,45 +1,136 @@
 # StudyFlow
 
-Ambiente de estudos local-first (Next.js, TypeScript, Tailwind, Dexie, Zod). Dados ficam no navegador; sem servidor.
+**StudyFlow** é um ambiente de estudos local-first, desenvolvido para organizar disciplinas, materiais, tarefas, revisões e sessões de foco em um único espaço. Os dados de estudo são armazenados no próprio navegador, sem exigir conta ou servidor para o uso principal.
 
-## Acesso
-- `/` — página de entrada minimalista com animação de tubarões ASCII.
-- `/study` — ambiente de estudos completo.
-- A animação é baseada em [stackedlol/ascii-sharks](https://github.com/stackedlol/ascii-sharks); código e licença MIT estão em `src/lib/ascii-sharks/`.
+## Visão geral
 
-## Comandos
-- `npm run dev` — desenvolvimento (o service worker só é registrado em produção).
-- `npm test` — testes unitários com Vitest (dados, backup, IA, SRS, Pomodoro e extração de PDF com fixtures reais).
-- `npm run lint` — análise estática com ESLint.
-- `npm run build` — exportação estática em `out/` (pronta para a Vercel). O `prebuild` copia o worker do pdfjs para `public/` (arquivo ignorado pelo git).
+A aplicação combina organização acadêmica, leitura de materiais, acompanhamento de atividades e ferramentas de concentração. A interface é organizada em torno de disciplinas e áreas de estudo, com personalização local e recursos opcionais de inteligência artificial.
 
-## Testes de navegador
-A suíte E2E antiga em Python foi retirada: ela era executada manualmente, dependia de URLs/portas fixas e continha seletores e nomes de cache desatualizados. Esses scripts não constituíam uma suíte reproduzível ligada aos comandos normais do projeto.
+- **Página inicial:** ponto de entrada para o ambiente de estudos.
+- **Ambiente de estudo:** disponível em `/study`.
+- **Landing page:** página minimalista com animação de tubarões ASCII, baseada em [ascii-sharks](https://github.com/stackedlol/ascii-sharks). Os arquivos correspondentes e sua licença estão em `src/lib/ascii-sharks/`.
 
-Por enquanto, `npm test` continua sendo a suíte automatizada mantida. A cobertura de navegador deve ser reintroduzida separadamente com Playwright Test, usando seletores voltados ao usuário, isolamento entre testes e um comando reproduzível — sem misturar esse trabalho com os testes unitários já existentes.
+## Principais recursos
 
-## Status
-Etapas 1–7 implementadas; consulte as limitações abaixo para os pontos que ainda exigem validação ou suporte adicional.
+### Organização acadêmica
+
+- Organização do conteúdo por disciplina.
+- Tarefas, avaliações, revisões e indicadores de estudo.
+- Conversas separadas por disciplina e conversas gerais.
+- Sugestões locais para retomar atividades e priorizar tarefas.
+
+### Personalização
+
+- Cores de destaque globais e acentos específicos por disciplina.
+- Perfil do estudante separado das configurações.
+- Foto ou avatar animado e capa de perfil, com limites de tamanho documentados na interface.
+- Barra lateral adaptável, com opção de fixar a expansão.
+- Ordenação adaptativa de painéis e abas a partir do histórico de uso armazenado no dispositivo.
+
+### Leitura e materiais
+
+- Biblioteca de documentos com extração de texto selecionável de PDFs.
+- Visualização e organização de materiais de estudo.
+- Integração de fórmulas e conteúdo Markdown na experiência de estudo.
+
+**Limitações de PDF:** a extração é baseada em texto selecionável; OCR não está implementado. PDFs escaneados ou compostos apenas por imagens não são interpretados. Fórmulas, tabelas, colunas e diagramas podem perder parte da formatação durante a extração. Confira o conteúdo extraído antes de utilizá-lo em atividades ou enviá-lo à IA.
+
+Limites documentados por arquivo: 30 MB, 400 páginas e 2 milhões de caracteres de texto extraído.
+
+### Foco e acompanhamento
+
+- Sessões de foco com Pomodoro.
+- Revisões e acompanhamento de progresso.
+- Registro local de preferências e atividade de navegação.
+
+### Inteligência artificial (opcional)
+
+A aplicação pode ser configurada para utilizar o OpenRouter ou um endpoint compatível com a API da OpenAI. O usuário define a chave, o modelo e, opcionalmente, o endpoint em **Configurações → Inteligência artificial**.
+
+- A aplicação funciona sem configurar uma chave.
+- O envio de conteúdo exige confirmação.
+- O conteúdo que será enviado é apresentado antes do envio.
+- A chave fica no `localStorage`, separada do IndexedDB e do backup de estudos.
+
+A comunicação com o provedor de IA é externa à arquitetura local-first; revise o conteúdo antes de confirmar qualquer envio.
+
+## Armazenamento e privacidade
+
+O StudyFlow não exige login e não oferece sincronização entre dispositivos nesta versão.
+
+| Dados | Armazenamento |
+|---|---|
+| Conteúdo de estudo | IndexedDB, por meio de Dexie; incluído no backup. |
+| Preferências de interface | `localStorage`. |
+| Histórico usado pela personalização adaptativa | Armazenamento local no dispositivo; fora do backup. |
+| Chave e configuração de IA | `localStorage`; a chave não é incluída no backup. |
+
+O mural e as publicações do perfil são locais ao dispositivo. Não há publicação pública, interação entre contas ou sincronização social nesta versão.
+
+## Tecnologias
+
+- **Next.js 16** e **React 19** — aplicação web.
+- **TypeScript** — tipagem estática.
+- **Tailwind CSS 4** — estilos.
+- **Dexie / IndexedDB** — persistência local dos dados de estudo.
+- **Zod** — validação de dados.
+- **PDF.js** — extração de texto de documentos PDF.
+- **KaTeX**, **remark-math** e **rehype-katex** — renderização de fórmulas.
+- **React Markdown** e **remark-gfm** — conteúdo Markdown.
+- **Vitest** — testes unitários.
+
+## Executar localmente
+
+### Requisitos
+
+- Node.js compatível com a versão do Next.js utilizada.
+- npm.
+
+### Instalação
+
+~~~bash
+git clone https://github.com/0xNicolinux/StudyFlow.git
+cd StudyFlow
+npm install
+~~~
+
+### Desenvolvimento
+
+~~~bash
+npm run dev
+~~~
+
+O script `predev` sincroniza o worker do PDF.js para a pasta pública antes de iniciar o servidor.
+
+### Testes e validação
+
+~~~bash
+npm test
+npm run lint
+~~~
+
+### Build
+
+~~~bash
+npm run build
+~~~
+
+O script `prebuild` também sincroniza o worker do PDF.js antes do build.
+
+## Testes
+
+A suíte automatizada mantida utiliza Vitest e cobre áreas como dados, backup, IA, revisão espaçada (SRS), Pomodoro e extração de PDFs com arquivos de teste.
+
+A antiga suíte E2E em Python foi removida por depender de URLs, portas e seletores desatualizados. Testes de navegador com Playwright ainda são uma possibilidade de evolução separada, não parte da suíte atual.
 
 ## Limitações conhecidas
-- Nunca testado contra o OpenRouter real (sem chave no ambiente de desenvolvimento): o CORS e os modelos reais precisam de conferência manual.
-- A Biblioteca extrai texto selecionável, não a página visual do PDF. PDFs escaneados/fotos não funcionam porque OCR não é suportado; PDFs protegidos por senha ou corrompidos não são lidos. Fórmulas, tabelas, colunas e diagramas podem perder a formatação — confira o texto extraído antes de estudar ou enviá-lo à IA.
-- Documentos: no máximo 30 MB por arquivo, 400 páginas e 2 milhões de caracteres de texto extraído por documento.
-- Sessão de foco com o app fechado: ao reabrir, é registrada pelo tempo planejado.
-- Dados e chave de API ficam apenas no navegador (sem sincronização entre dispositivos).
 
-## IA (OpenRouter ou endpoint compatível com OpenAI)
-Configure em Configurações → Inteligência artificial: chave própria, modelo e (opcional) endpoint. A chave fica no `localStorage`,
-fora do IndexedDB e fora do backup. Nada é enviado sem confirmação; o conteúdo exato (mensagem, anotações selecionadas, histórico)
-é mostrado antes do envio. Sem chave, o app segue funcionando e o chat avisa que a IA não está configurada.
+- A integração com OpenRouter não foi validada contra o serviço real neste ambiente de desenvolvimento; CORS e comportamento de modelos reais precisam de validação com configuração própria.
+- PDFs escaneados, protegidos por senha ou corrompidos não são processados pela extração atual.
+- Uma sessão de foco que termina com o aplicativo fechado é registrada ao reabrir com base no tempo planejado.
+- Dados locais não são sincronizados entre dispositivos.
+- O envio para IA depende de configuração e confirmação explícita do usuário.
 
-## Perfil e mural local
-- O perfil do estudante é separado de Configurações e aceita foto/GIF ou avatar animado em vídeo MP4/WebM de até 2,8 MB; a capa aceita imagem/GIF/vídeo curto de até 3 MB. O perfil também inclui instituição, nível de ensino, ano de conclusão, papel e país.
-- O mural permite publicações locais com texto, imagens, GIFs e vídeos curtos. Nesta etapa, o conteúdo fica só no dispositivo e entra no backup; não existe publicação pública, sincronização ou interação entre contas.
-- Configurações inclui a escolha da cor de destaque global; dentro de uma disciplina, o acento da própria disciplina prevalece.
+## Status do projeto
 
-## Barra lateral, personalização e conversas
-- **Barra lateral (desktop):** o botão de fixar (alfinete) mantém a barra expandida mesmo com o mouse fora. Desafixada, ela recolhe para um trilho de ícones e expande por cima do conteúdo ao passar o mouse pela borda (ou ao focar com o Tab). O estado do botão e a escolha ficam salvos no dispositivo. No celular continua o menu em gaveta.
-- **Personalização adaptativa:** o app registra, só no aparelho, quais painéis e disciplinas você abre. Com isso ele (1) ordena as abas de cada disciplina e os indicadores do Início; (2) mostra "Sugestões para agora" (tarefas atrasadas, avaliação próxima sem quiz, revisões, retomar a última disciplina, foco); (3) usa a cor da disciplina como acento da área de trabalho e sugere a cor menos usada ao criar uma nova. O menu só se reordena quando o mouse sai dele, e as abas só ao abrir a disciplina, para nada se mover sob o cursor. Configurações → Personalização apaga esse histórico.
-- **Conversas:** cada disciplina tem suas próprias conversas independentes (e fora delas há as "gerais"). O ícone de balão no topo abre as conversas do contexto atual; "Limpar histórico" e "Excluir conversa" só afetam esse contexto.
-- **Onde ficam os dados:** conteúdo de estudo no IndexedDB (entra no backup); preferências de interface e histórico de uso no `localStorage` (chaves `studyflow.sidebar.v3` e `studyflow.adaptive.v1`, fora do backup). Nada exige login e nada é sincronizado; o único tráfego externo é a IA opcional, sempre com confirmação.
+O StudyFlow é um projeto em evolução. As funcionalidades descritas representam o escopo documentado no repositório; limitações e integrações externas devem ser consideradas ao avaliar o uso.
