@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type TextareaHTMLAttributes } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { Pencil, Play, Trash2 } from "lucide-react";
 import { db } from "@/lib/db";
@@ -7,10 +7,35 @@ import { createFlashcard, deleteFlashcard, reviewFlashcard, updateFlashcard } fr
 import { GRADE_LABELS, previewLabel, type Grade } from "@/lib/srs";
 import { dueCount, retention } from "@/lib/stats";
 import { useNow } from "./use-now";
+import { cn } from "@/lib/cn";
 import { Button, EmptyState, Field, IconButton, Loading, Modal } from "./ui";
 import type { Flashcard } from "@/lib/schemas";
 
-const textarea = "w-full resize-y rounded-lg border border-line bg-surface px-3 py-2 text-sm focus:border-accent focus:outline-none";
+const textarea = "block w-full min-h-10 resize-none overflow-hidden rounded-lg border border-line bg-surface px-3 py-2 text-sm leading-6 focus:border-accent focus:outline-none";
+
+function AutoGrowTextarea({ className, value, onInput, ...props }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  const ref = useRef<HTMLTextAreaElement>(null);
+
+  function resize() {
+    const element = ref.current;
+    if (!element) return;
+    element.style.height = "auto";
+    element.style.height = `${element.scrollHeight}px`;
+  }
+
+  useEffect(resize, [value]);
+
+  return (
+    <textarea
+      {...props}
+      ref={ref}
+      value={value}
+      rows={1}
+      onInput={(event) => { resize(); onInput?.(event); }}
+      className={cn(textarea, className)}
+    />
+  );
+}
 
 export function FlashcardsPanel({ subjectId }: { subjectId?: string }) {
   const cards = useLiveQuery(() => db.flashcards.toArray().then((a) => a.filter((c) => subjectId === undefined || c.subjectId === subjectId)), [subjectId]);
@@ -70,9 +95,9 @@ function CardForm({ subjectId, subjects }: { subjectId?: string; subjects: impor
   }
   return (
     <form onSubmit={add} className="study-create-form space-y-4 rounded-xl border border-line bg-surface p-5">
-      <div className="grid gap-4 sm:grid-cols-2">
-        <textarea className={textarea} rows={3} value={front} onChange={(e) => setFront(e.target.value)} placeholder="Frente (pergunta)" aria-label="Frente do cartão" maxLength={2000} />
-        <textarea className={textarea} rows={2} value={back} onChange={(e) => setBack(e.target.value)} placeholder="Verso (resposta)" aria-label="Verso do cartão" maxLength={4000} />
+      <div className="grid items-start gap-4 sm:grid-cols-2">
+        <AutoGrowTextarea value={front} onChange={(e) => setFront(e.target.value)} placeholder="Frente (pergunta)" aria-label="Frente do cartão" maxLength={2000} />
+        <AutoGrowTextarea value={back} onChange={(e) => setBack(e.target.value)} placeholder="Verso (resposta)" aria-label="Verso do cartão" maxLength={4000} />
       </div>
       <div className="flex flex-wrap items-center gap-3">
         {subjectId === undefined && (
@@ -94,8 +119,8 @@ function EditForm({ card, onDone }: { card: Flashcard; onDone: () => void }) {
   async function save(e: React.FormEvent) { e.preventDefault(); try { await updateFlashcard(card.id, { front, back }); onDone(); } catch { setErr("Preencha a frente e o verso."); } }
   return (
     <form onSubmit={save} className="space-y-3">
-      <Field label="Frente"><textarea className={textarea} rows={3} value={front} onChange={(e) => setFront(e.target.value)} maxLength={2000} /></Field>
-      <Field label={`Verso (${back.length}/4000)`} error={err}><textarea className={textarea} rows={4} value={back} onChange={(e) => setBack(e.target.value)} maxLength={4000} /></Field>
+      <Field label="Frente"><AutoGrowTextarea value={front} onChange={(e) => setFront(e.target.value)} maxLength={2000} /></Field>
+      <Field label={`Verso (${back.length}/4000)`} error={err}><AutoGrowTextarea value={back} onChange={(e) => setBack(e.target.value)} maxLength={4000} /></Field>
       <div className="flex justify-end gap-2"><Button type="button" variant="ghost" onClick={onDone}>Cancelar</Button><Button type="submit" variant="primary">Salvar</Button></div>
     </form>
   );
