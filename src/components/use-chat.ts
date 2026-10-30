@@ -53,7 +53,7 @@ export function useChat(activeSubjectId: string | null) {
         ? (await addMessage(convId, "user", text)).id
         : [...all].reverse().find((message) => message.role === "user")?.id ?? crypto.randomUUID();
       const { messages } = buildMessages(history, text, items);
-      messages[0].content += " Quando o estudante solicitar explicitamente a criação de flashcards, quiz ou anotação, use a ferramenta correspondente. Não use ferramentas para perguntas conceituais ou simples pedidos de explicação. Se faltar um assunto essencial, faça uma pergunta de esclarecimento em texto antes de criar. Nunca diga que salvou: apenas solicite a criação; o aplicativo valida e salva.";
+      messages[0].content += " Quando o estudante solicitar explicitamente a criação de flashcards, quiz ou anotação, use a ferramenta correspondente. Não use ferramentas para perguntas conceituais ou simples pedidos de explicação. Se não houver material selecionado e o pedido não indicar um assunto, pergunte se o estudante prefere anexar um material pelo botão de contexto ou informar o assunto manualmente. Se o pedido já indicar o assunto, não exija material. Se faltar qualquer detalhe essencial, pergunte antes de criar. Nunca diga que salvou: apenas solicite a criação; o aplicativo valida e salva.";
       const toolCalls: Array<{ id: string; name: string; arguments: unknown }> = [];
       for await (const event of getProvider(settings.provider).streamChat({
         ...cfg,
