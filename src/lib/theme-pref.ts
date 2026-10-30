@@ -1,6 +1,5 @@
 import { createLocalStore } from "./local-store";
 
-export const DEFAULT_ACCENT = "#9fe9f7";
 export const DEFAULT_THEME_MODE = "dark" as const;
 export const DEFAULT_DENSITY = "comfortable" as const;
 
