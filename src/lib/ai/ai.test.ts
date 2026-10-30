@@ -1,7 +1,7 @@
 import "fake-indexeddb/auto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { IDBFactory } from "fake-indexeddb";
-import { AiError } from "./types";
+import { AiError, type ChatStreamEvent } from "./types";
 import { streamOpenAiCompatible } from "./openai-compatible";
 import { DEFAULT_SETTINGS, __setStore, assertReady, fetchModels, loadSettings, saveSettings, validateBaseUrl } from "./settings";
 import { LIMITS, buildContextItems, buildMessages } from "./context";
@@ -12,30 +12,76 @@ const sse = (...lines: string[]) =>
   new Response(new ReadableStream({ start(c) { const e = new TextEncoder(); lines.forEach((l) => c.enqueue(e.encode(l))); c.close(); } }), { status: 200 });
 const chunk = (t: string) => `data: ${JSON.stringify({ choices: [{ delta: { content: t } }] })}\n\n`;
 const req = (fetchImpl: typeof fetch) => ({ baseUrl: "https://x.test/api/v1/", apiKey: "sk-secret", model: "m", messages: [{ role: "user" as const, content: "oi" }], fetchImpl });
-async function collect(g: AsyncGenerator<string>) { let s = ""; for await (const t of g) s += t; return s; }
+async function collect(g: AsyncGenerator<ChatStreamEvent>) { const events: ChatStreamEvent[] = []; for await (const event of g) events.push(event); return events; }
+async function collectText(g: AsyncGenerator<ChatStreamEvent>) { return (await collect(g)).filter((e) => e.type === "text").map((e) => e.text).join(""); }
+const toolDelta = (index: number, fn: { name?: string; arguments?: string }, id?: string) =>
+  `data: ${JSON.stringify({ choices: [{ delta: { tool_calls: [{ index, ...(id ? { id, type: "function" } : {}), function: fn }] } }] })}\\n\\n`;
 async function kindOf(p: Promise<unknown>) { try { await p; return "none"; } catch (e) { return e instanceof AiError ? e.kind : "other"; } }
 
 describe("streaming", () => {
   it("concatena deltas, ignora keep-alive e para em [DONE]", async () => {
     const f = vi.fn().mockResolvedValue(sse(": OPENROUTER PROCESSING\n\n", chunk("Olá"), chunk(", mundo"), "data: [DONE]\n\n", chunk("NÃO")));
-    expect(await collect(streamOpenAiCompatible(req(f)))).toBe("Olá, mundo");
+    expect(await collectText(streamOpenAiCompatible(req(f)))).toBe("Olá, mundo");
     const [url, init] = f.mock.calls[0];
     expect(url).toBe("https://x.test/api/v1/chat/completions");
     expect((init.headers as Record<string, string>).Authorization).toBe("Bearer sk-secret");
     expect(JSON.parse(init.body).stream).toBe(true);
   });
 
+  it("remonta tool calls com argumentos JSON divididos em vários deltas", async () => {
+    const f = vi.fn().mockResolvedValue(sse(
+      toolDelta(0, { name: "create_flashcards", arguments: "{\\"title\\":\\"POO\\",\\"cards\\":[{\\"front\\":\\"Classe?" }, "call-0"),
+      toolDelta(0, { arguments: "\\"}]}"}),
+      "data: [DONE]\\n\\n",
+    ));
+    const events = await collect(streamOpenAiCompatible({
+      ...req(f),
+      tools: [{ type: "function", function: { name: "create_flashcards", description: "Cria cartões", parameters: { type: "object" } } }],
+      toolChoice: "auto",
+    }));
+    expect(events).toEqual([{ type: "tool_call", id: "call-0", name: "create_flashcards", arguments: { title: "POO", cards: [{ front: "Classe?" }] } }]);
+    const body = JSON.parse(f.mock.calls[0][1].body as string);
+    expect(body.tools[0].function.name).toBe("create_flashcards");
+    expect(body.tool_choice).toBe("auto");
+  });
+
+  it("remonta múltiplas ferramentas pela ordem dos índices", async () => {
+    const f = vi.fn().mockResolvedValue(sse(
+      toolDelta(1, { name: "create_quiz", arguments: "{\\"title\\":\\"Q\\"}" }, "call-1"),
+      toolDelta(0, { name: "create_note", arguments: "{\\"title\\":\\"N\\"}" }, "call-0"),
+      "data: [DONE]\\n\\n",
+    ));
+    const events = await collect(streamOpenAiCompatible(req(f)));
+    expect(events.map((event) => event.type === "tool_call" ? [event.id, event.name, event.arguments] : event)).toEqual([
+      ["call-0", "create_note", { title: "N" }],
+      ["call-1", "create_quiz", { title: "Q" }],
+    ]);
+  });
+
+  it("rejeita argumentos de ferramenta que não formam JSON", async () => {
+    const f = vi.fn().mockResolvedValue(sse(
+      toolDelta(0, { name: "create_note", arguments: "{invalid" }, "call-0"),
+      "data: [DONE]\\n\\n",
+    ));
+    expect(await kindOf(collect(streamOpenAiCompatible(req(f))))).toBe("tool_call_invalid");
+  });
+
+  it("mantém eventos de texto quando não há tool calls", async () => {
+    const f = vi.fn().mockResolvedValue(sse(chunk("resposta"), "data: [DONE]\\n\\n"));
+    expect(await collect(streamOpenAiCompatible(req(f)))).toEqual([{ type: "text", text: "resposta" }]);
+  });
+
   it("remonta linhas SSE partidas entre pedaços", async () => {
     const full = chunk("abc");
     const f = vi.fn().mockResolvedValue(sse(full.slice(0, 15), full.slice(15), "data: [DONE]\n\n"));
-    expect(await collect(streamOpenAiCompatible(req(f)))).toBe("abc");
+    expect(await collectText(streamOpenAiCompatible(req(f)))).toBe("abc");
   });
 
   it("erro no meio do stream vira AiError('stream') mantendo o texto parcial já entregue", async () => {
     const f = vi.fn().mockResolvedValue(sse(chunk("parcial"), `data: ${JSON.stringify({ error: { message: "boom" } })}\n\n`));
     const g = streamOpenAiCompatible(req(f));
     const first = await g.next();
-    expect(first.value).toBe("parcial");
+    expect(first.value).toEqual({ type: "text", text: "parcial" });
     expect(await kindOf(g.next())).toBe("stream");
   });
 
@@ -43,13 +89,13 @@ describe("streaming", () => {
     "HTTP %i -> %s",
     async (status, kind) => {
       const f = vi.fn().mockResolvedValue(new Response(JSON.stringify({ error: { message: "x" } }), { status }));
-      expect(await kindOf(collect(streamOpenAiCompatible(req(f))))).toBe(kind);
+      expect(await kindOf(collectText(streamOpenAiCompatible(req(f))))).toBe(kind);
     },
   );
 
   it("falha de rede vira 'network' e a mensagem não contém a chave", async () => {
     const f = vi.fn().mockRejectedValue(new TypeError("Failed to fetch"));
-    try { await collect(streamOpenAiCompatible(req(f))); } catch (e) {
+    try { await collectText(streamOpenAiCompatible(req(f))); } catch (e) {
       expect((e as AiError).kind).toBe("network");
       expect((e as AiError).message).not.toContain("sk-secret");
     }
@@ -57,7 +103,7 @@ describe("streaming", () => {
 
   it("abort vira 'aborted'", async () => {
     const f = vi.fn().mockRejectedValue(Object.assign(new Error("a"), { name: "AbortError" }));
-    expect(await kindOf(collect(streamOpenAiCompatible(req(f))))).toBe("aborted");
+    expect(await kindOf(collectText(streamOpenAiCompatible(req(f))))).toBe("aborted");
   });
 });
 
