@@ -160,6 +160,20 @@ export async function dispatchGenerationTool(name: string, args: unknown, subjec
   }
 }
 
+/** Valida JSON puro (ou cercado por bloco ```json) usado pelo fallback guiado quando tools não estão disponíveis. */
+export function parseCategoryFallbackText(toolName: string, response: string): unknown {
+  const trimmed = response.trim();
+  const fenced = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+  const json = fenced ? fenced[1] : trimmed;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(json);
+  } catch {
+    throw new AiError("tool_call_invalid", "O modelo não retornou JSON válido na criação guiada. Tente novamente ou informe o assunto de outra forma.");
+  }
+  return validateGenerationToolCall(toolName, parsed).data;
+}
+
 /** Gera um payload usando somente a ferramenta correspondente ao tipo solicitado pela categoria. */
 export async function generateCategoryToolPayload(job: GenerationJob, signal?: AbortSignal): Promise<unknown> {
   const definition = GenerationToolDefinitions.find((tool) => tool.function.name === job.toolName);
@@ -179,20 +193,44 @@ export async function generateCategoryToolPayload(job: GenerationJob, signal?: A
       content: `${context}\\n\\nPedido do estudante:\\n${job.requestText}`,
     },
   ];
-  const calls = [];
+  try {
+    const calls = [];
+    for await (const event of getProvider(settings.provider).streamChat({
+      ...config,
+      messages,
+      tools: [definition],
+      toolChoice: { type: "function", function: { name: job.toolName } },
+      signal,
+    })) {
+      if (event.type !== "tool_call") continue;
+      if (event.name !== job.toolName) throw new AiError("tool_call_invalid", "O modelo tentou usar uma ferramenta diferente da solicitada.");
+      calls.push(event);
+    }
+    if (calls.length !== 1) {
+      throw new AiError("tools_unsupported", "O modelo não retornou uma chamada estruturada. Vou tentar o formato guiado.");
+    }
+    return validateGenerationToolCall(job.toolName, calls[0].arguments).data;
+  } catch (error) {
+    if (!(error instanceof AiError) || error.kind !== "tools_unsupported") throw error;
+  }
+
+  const fallbackMessages: ChatTurn[] = [
+    {
+      role: "system",
+      content: `Você é o gerador de conteúdo do StudyFlow. Responda apenas com um objeto JSON válido, sem Markdown, cercas de código ou explicações. O formato deve corresponder à ferramenta ${job.toolName}. O JSON será validado automaticamente; não inclua propriedades adicionais.`,
+    },
+    {
+      role: "user",
+      content: `${context}\\n\\nPedido do estudante:\\n${job.requestText}\\n\\nContrato JSON exigido:\\n${JSON.stringify(definition.function.parameters)}`,
+    },
+  ];
+  let response = "";
   for await (const event of getProvider(settings.provider).streamChat({
     ...config,
-    messages,
-    tools: [definition],
-    toolChoice: { type: "function", function: { name: job.toolName } },
+    messages: fallbackMessages,
     signal,
   })) {
-    if (event.type !== "tool_call") continue;
-    if (event.name !== job.toolName) throw new AiError("tool_call_invalid", "O modelo tentou usar uma ferramenta diferente da solicitada.");
-    calls.push(event);
+    if (event.type === "text") response += event.text;
   }
-  if (calls.length !== 1) {
-    throw new AiError("tools_unsupported", "O modelo não retornou uma chamada estruturada válida. Tente outro modelo ou use a criação manual.");
-  }
-  return validateGenerationToolCall(job.toolName, calls[0].arguments).data;
+  return parseCategoryFallbackText(job.toolName, response);
 }
