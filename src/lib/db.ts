@@ -1,5 +1,5 @@
 import Dexie, { type EntityTable } from "dexie";
-import type { Conversation, DocText, Flashcard, Message, Note, Profile, ProfilePost, Quiz, QuizAttempt, StudyDocument, StudySession, Subject, Task } from "./schemas";
+import type { Conversation, DocText, Flashcard, GenerationJob, Message, Note, Profile, ProfilePost, Quiz, QuizAttempt, StudyDocument, StudySession, Subject, Task } from "./schemas";
 
 export class StudyFlowDB extends Dexie {
   subjects!: EntityTable<Subject, "id">;
@@ -16,6 +16,7 @@ export class StudyFlowDB extends Dexie {
   documents!: EntityTable<StudyDocument, "id">;
   docTexts!: EntityTable<DocText, "id">;
   docFiles!: EntityTable<{ id: string; blob: Blob }, "id">;
+  generationJobs!: EntityTable<GenerationJob, "id">;
 
   constructor(name = "studyflow") {
     super(name);
@@ -44,6 +45,10 @@ export class StudyFlowDB extends Dexie {
     // v4: publicações do feed de perfil, armazenadas localmente como os demais dados.
     this.version(4).stores({
       posts: "id, createdAt",
+    });
+    // v5: fila e histórico local das gerações da IA.
+    this.version(5).stores({
+      generationJobs: "id, status, kind, subjectId, createdAt, completedAt, viewedAt, &sourceKey",
     });
   }
 }
