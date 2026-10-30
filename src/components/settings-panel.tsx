@@ -7,7 +7,7 @@ import { exportBackup, importBackup } from "@/lib/repo";
 import { Button } from "./ui";
 import { AiSection } from "./ai-section";
 import { resetAdaptive } from "./use-adaptive";
-import { DEFAULT_DENSITY, DEFAULT_THEME_MODE, themeStore, type InterfaceDensity, type ThemeMode, type ThemePreferences } from "@/lib/theme-pref";
+import { DEFAULT_DENSITY, DEFAULT_THEME_MODE, themeStore, type InterfaceDensity, type ThemePreferences } from "@/lib/theme-pref";
 import { useLocalStore } from "./use-local-store";
 
 export function SettingsPanel() {
