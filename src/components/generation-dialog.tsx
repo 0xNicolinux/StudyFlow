@@ -134,7 +134,7 @@ export function GenerationDialog({
 
         <label className="block space-y-1.5">
           <span className="text-xs font-medium text-muted">Salvar em disciplina</span>
-          <select value={targetSubjectId} onChange={(event) => setTargetSubjectId(event.target.value)} className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm">
+          <select disabled={!!confirmation} value={targetSubjectId} onChange={(event) => setTargetSubjectId(event.target.value)} className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm">
             <option value="">Sem disciplina</option>
             {subjects?.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
           </select>
@@ -144,7 +144,7 @@ export function GenerationDialog({
           <p className="text-xs font-medium text-muted">Materiais disponíveis</p>
           {subject && (
             <label className="flex items-start gap-2 py-1">
-              <input type="checkbox" className="mt-0.5 accent-[var(--accent)]" checked={includeSubject} onChange={(event) => setIncludeSubject(event.target.checked)} />
+              <input type="checkbox" className="mt-0.5 accent-[var(--accent)]" checked={includeSubject} disabled={!!confirmation} onChange={(event) => setIncludeSubject(event.target.checked)} />
               <span><span className="block">{subject.name} — disciplina</span><span className="block text-xs text-muted">Nome e objetivos de estudo</span></span>
             </label>
           )}
@@ -152,13 +152,13 @@ export function GenerationDialog({
             <>
               {docs.map((doc) => (
                 <label key={doc.id} className="flex items-start gap-2 py-1">
-                  <input type="checkbox" className="mt-0.5 accent-[var(--accent)]" checked={docIds.includes(doc.id)} onChange={() => toggleId(doc.id, docIds, setDocIds)} />
+                  <input type="checkbox" className="mt-0.5 accent-[var(--accent)]" checked={docIds.includes(doc.id)} disabled={!!confirmation} onChange={() => toggleId(doc.id, docIds, setDocIds)} />
                   <span className="min-w-0 flex-1"><span className="block truncate">{doc.name}</span><span className="block text-xs text-muted">Documento · {doc.chars.toLocaleString("pt-BR")} caracteres{doc.truncated ? " · truncado" : ""}</span></span>
                 </label>
               ))}
               {notes.map((note) => (
                 <label key={note.id} className="flex items-start gap-2 py-1">
-                  <input type="checkbox" className="mt-0.5 accent-[var(--accent)]" checked={noteIds.includes(note.id)} onChange={() => toggleId(note.id, noteIds, setNoteIds)} />
+                  <input type="checkbox" className="mt-0.5 accent-[var(--accent)]" checked={noteIds.includes(note.id)} disabled={!!confirmation} onChange={() => toggleId(note.id, noteIds, setNoteIds)} />
                   <span className="min-w-0 flex-1"><span className="block truncate">{note.title}</span><span className="block text-xs text-muted">Anotação · {note.body.length.toLocaleString("pt-BR")} caracteres</span></span>
                 </label>
               ))}
@@ -171,6 +171,7 @@ export function GenerationDialog({
           <span className="text-xs font-medium text-muted">{hasSelectedContext ? "Assunto ou instruções adicionais (opcional)" : "Qual assunto deseja estudar?"}</span>
           <textarea
             value={manual}
+            disabled={!!confirmation}
             onChange={(event) => setManual(event.target.value)}
             rows={3}
             maxLength={4000}
@@ -182,7 +183,7 @@ export function GenerationDialog({
         {(request.kind === "flashcards" || request.kind === "quiz") && (
           <label className="flex items-center gap-3">
             <span className="text-xs font-medium text-muted">{request.kind === "flashcards" ? "Quantidade de cartões" : "Quantidade de questões"}</span>
-            <select value={quantity} onChange={(event) => setQuantity(event.target.value)} className="rounded-lg border border-line bg-surface px-3 py-2 text-sm">
+            <select disabled={!!confirmation} value={quantity} onChange={(event) => setQuantity(event.target.value)} className="rounded-lg border border-line bg-surface px-3 py-2 text-sm">
               {[5, 10, 15, 20].map((value) => <option key={value} value={value}>{value}</option>)}
             </select>
           </label>
