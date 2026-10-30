@@ -17,6 +17,28 @@ export async function createFlashcard(input: { subjectId: string | null; front: 
   return card;
 }
 
+/** Persiste um lote inteiro de cartões em uma transação; nenhum cartão parcial é mantido. */
+export async function createFlashcardsBatch(input: {
+  subjectId: string | null;
+  cards: { front: string; back: string }[];
+}): Promise<Flashcard[]> {
+  const now = Date.now();
+  const cards = input.cards.map(({ front, back }) => FlashcardSchema.parse({
+    id: uid(),
+    subjectId: input.subjectId,
+    front,
+    back,
+    createdAt: now,
+    dueAt: 0,
+    intervalDays: 0,
+    ease: 2.5,
+    correct: 0,
+    wrong: 0,
+  }));
+  await db.transaction("rw", db.flashcards, () => db.flashcards.bulkAdd(cards));
+  return cards;
+}
+
 export async function updateFlashcard(id: string, patch: { front: string; back: string }) {
   const c = await db.flashcards.get(id);
   if (!c) throw new Error("Cartão não encontrado");
