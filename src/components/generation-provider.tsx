@@ -193,7 +193,7 @@ export function GenerationProvider({
     if (job.status === "completed" && job.contentId) {
       setOpenTarget({ kind: job.kind, contentId: job.contentId, jobId: job.id });
       void markGenerationViewed(job.id).catch(() => undefined);
-    } else if (job.status === "failed") {
+    } else if (job.status === "failed" || job.status === "interrupted") {
       setDialog({ kind: job.kind, subjectId: job.subjectId ?? undefined });
     }
     onOpenJob(job);
@@ -207,7 +207,7 @@ export function GenerationProvider({
   }), [jobs, openDialog, openTarget, clearOpenTarget, markKindViewed, retry, enqueueChatToolCall]);
 
   const notifications = (jobs ?? []).filter((job) =>
-    (job.status === "completed" && job.viewedAt === null || job.status === "failed") && !dismissed.has(job.id),
+    (job.status === "completed" && job.viewedAt === null || job.status === "failed" || job.status === "interrupted") && !dismissed.has(job.id),
   ).slice(-3).reverse();
 
   return (
@@ -244,7 +244,7 @@ export function GenerationProvider({
                   </>
                 ) : (
                   <>
-                    <p className="text-sm font-semibold">Não foi possível gerar o conteúdo.</p>
+                    <p className="text-sm font-semibold">{job.status === "interrupted" ? "A geração foi interrompida." : "Não foi possível gerar o conteúdo."}</p>
                     <p className="mt-0.5 text-xs text-muted">{job.error}</p>
                   </>
                 )}
@@ -254,7 +254,7 @@ export function GenerationProvider({
               </IconButton>
             </div>
             <div className="mt-3 flex justify-end gap-2">
-              {job.status === "failed" && <Button variant="ghost" className="min-h-8 px-2.5 text-xs" onClick={() => void retry(job.id)}>Tentar novamente</Button>}
+              {(job.status === "failed" || job.status === "interrupted") && <Button variant="ghost" className="min-h-8 px-2.5 text-xs" onClick={() => void retry(job.id)}>Tentar novamente</Button>}
               <Button variant="primary" className="min-h-8 px-2.5 text-xs" onClick={() => openJob(job)}>
                 {job.status === "completed" ? "Abrir conteúdo" : "Abrir categoria"} <ExternalLink className="size-3.5" aria-hidden />
               </Button>
