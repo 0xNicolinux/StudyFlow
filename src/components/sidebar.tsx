@@ -47,7 +47,7 @@ export function Sidebar({ view, onNavigate, onNewSubject, onEditSubject, onDelet
 
   return (
     <div className="flex h-full w-full flex-col bg-surface">
-      <div className={cn("sidebar-profile-row flex items-center gap-1", collapsed ? "mx-2 my-3 justify-center" : "mx-3 mb-3 mt-2")}>
+      <div className={cn("sidebar-profile-row mt-4 mb-3 flex h-10 shrink-0 items-center gap-1", collapsed ? "mx-2 justify-center" : "mx-3")}>
         <button
           onClick={() => onNavigate({ kind: "profile" })}
           className={cn("sidebar-profile flex min-w-0 items-center gap-3 text-left", view.kind === "profile" && "is-active", collapsed ? "justify-center" : "flex-1")}
