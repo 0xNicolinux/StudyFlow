@@ -156,6 +156,28 @@ export const BackupSchema = z.object({
   }),
 });
 
+export const GenerationJobSchema = z.object({
+  id: z.string().min(1),
+  kind: z.enum(["flashcards", "quiz", "note"]),
+  title: z.string().trim().min(1).max(200),
+  subjectId: z.string().nullable(),
+  source: z.enum(["chat", "category"]),
+  sourceKey: z.string().min(1).max(300).optional(),
+  toolName: z.enum(["create_flashcards", "create_quiz", "create_note"]),
+  payload: z.unknown().optional(),
+  requestText: z.string().max(2000),
+  contextText: z.string().max(30_000),
+  status: z.enum(["queued", "generating", "completed", "failed", "interrupted"]),
+  createdAt: z.number(),
+  startedAt: z.number().nullable(),
+  completedAt: z.number().nullable(),
+  contentId: z.string().nullable(),
+  count: z.number().int().min(0),
+  error: z.string().max(500).nullable(),
+  viewedAt: z.number().nullable(),
+});
+
+export type GenerationJob = z.infer<typeof GenerationJobSchema>;
 export type Subject = z.infer<typeof SubjectSchema>;
 export type Task = z.infer<typeof TaskSchema>;
 export type Note = z.infer<typeof NoteSchema>;
