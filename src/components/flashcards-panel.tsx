@@ -46,8 +46,8 @@ export function FlashcardsPanel({ subjectId }: { subjectId?: string }) {
   const generation = useGeneration();
 
   useEffect(() => {
-    void generation.markKindViewed("flashcards");
-  }, [generation.jobs, generation.markKindViewed]);
+    void generation.markKindViewed("flashcards", subjectId);
+  }, [generation.jobs, generation.markKindViewed, subjectId]);
 
   useEffect(() => {
     const target = generation.openTarget;
