@@ -96,7 +96,7 @@ export function useChat(activeSubjectId: string | null) {
             : call.validated.kind === "quiz" ? call.validated.data.questions.length : 1;
           return `${label} “${call.validated.title}” (${count} ${call.validated.kind === "flashcards" ? "cartões" : call.validated.kind === "quiz" ? "perguntas" : "anotação"})`;
         }).join(" e ");
-        acc = [acc.trim(), `Estou preparando ${summary}. Avisarei quando estiver pronto.`].filter(Boolean).join("\\n\\n");
+        acc = [acc.trim(), `Estou preparando ${summary}. Avisarei quando estiver pronto.`].filter(Boolean).join("\n\n");
         setStreamText(acc);
       }
       if (acc.trim()) await addMessage(convId, "assistant", acc);
