@@ -1,13 +1,13 @@
 "use client";
-import { useRef, useState, type CSSProperties } from "react";
+import { useRef, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { Check, Download, Monitor, Moon, Sun, Upload } from "lucide-react";
+import { Check, Download, Moon, Sun, Upload } from "lucide-react";
 import { db } from "@/lib/db";
 import { exportBackup, importBackup } from "@/lib/repo";
 import { Button } from "./ui";
 import { AiSection } from "./ai-section";
 import { resetAdaptive } from "./use-adaptive";
-import { ACCENT_OPTIONS, DEFAULT_ACCENT, DEFAULT_DENSITY, DEFAULT_THEME_MODE, themeStore, type InterfaceDensity, type ThemeMode, type ThemePreferences } from "@/lib/theme-pref";
+import { DEFAULT_DENSITY, DEFAULT_THEME_MODE, themeStore, type InterfaceDensity, type ThemeMode, type ThemePreferences } from "@/lib/theme-pref";
 import { useLocalStore } from "./use-local-store";
 
 export function SettingsPanel() {
@@ -22,16 +22,14 @@ export function SettingsPanel() {
 }
 
 function AppearanceSection() {
-  const { accent, mode, density } = useLocalStore(themeStore);
-  const selectedAccent = ACCENT_OPTIONS.find((option) => option.color === accent);
+  const { mode, density } = useLocalStore(themeStore);
   const update = (patch: Partial<ThemePreferences>) => {
     themeStore.set((current) => ({ ...current, ...patch }));
   };
 
   const modeOptions = [
-    { value: "light", label: "Claro", description: "Fundo claro e suave", icon: Sun },
-    { value: "dark", label: "Escuro", description: "Menos brilho em ambientes escuros", icon: Moon },
-    { value: "system", label: "Sistema", description: "Acompanha o dispositivo", icon: Monitor },
+    { value: "light", label: "Claro", description: "Fundo claro com texto preto", icon: Sun },
+    { value: "dark", label: "Escuro", description: "Interface escura para ambientes com pouca luz", icon: Moon },
   ] as const;
 
   const densityOptions: { value: InterfaceDensity; label: string; description: string }[] = [
@@ -43,7 +41,7 @@ function AppearanceSection() {
     <section className="settings-section space-y-5">
       <div>
         <h2 className="text-sm font-semibold">Aparência</h2>
-        <p className="mt-1 text-sm text-muted">Personalize o tema, a cor de destaque e o espaçamento do StudyFlow.</p>
+        <p className="mt-1 text-sm text-muted">Escolha o tema e o espaçamento da interface.</p>
       </div>
 
       <div className="space-y-2">
@@ -56,7 +54,7 @@ function AppearanceSection() {
                 key={option.value}
                 type="button"
                 aria-pressed={mode === option.value}
-                onClick={() => update({ mode: option.value as ThemeMode })}
+                onClick={() => update({ mode: option.value })}
                 className={mode === option.value ? "theme-mode-option is-selected" : "theme-mode-option"}
               >
                 <span className="theme-mode-icon"><Icon size={17} aria-hidden /></span>
@@ -69,48 +67,6 @@ function AppearanceSection() {
             );
           })}
         </div>
-        <p className="text-xs text-muted">
-          {mode === "system"
-            ? "O tema muda automaticamente quando a aparência do seu dispositivo muda."
-            : mode === "light"
-              ? "O modo claro está ativo em todas as áreas do ambiente de estudos."
-              : "O modo escuro está ativo em todas as áreas do ambiente de estudos."}
-        </p>
-      </div>
-
-      <div className="space-y-2">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted">Cor de destaque</h3>
-        <div className="accent-picker" aria-label="Paleta de cores">
-          {ACCENT_OPTIONS.map((option) => (
-            <button
-              key={option.color}
-              type="button"
-              aria-label={`Usar cor ${option.label}`}
-              aria-pressed={accent === option.color}
-              title={option.label}
-              onClick={() => update({ accent: option.color })}
-              className={accent === option.color ? "accent-swatch is-selected" : "accent-swatch"}
-              style={{ "--swatch": option.color } as CSSProperties}
-            >
-              {accent === option.color && <Check size={15} aria-hidden />}
-            </button>
-          ))}
-          <label className="custom-accent-control" title="Escolher qualquer cor">
-            <input
-              type="color"
-              className="custom-accent-input"
-              aria-label="Escolher cor personalizada"
-              value={accent}
-              onChange={(event) => update({ accent: event.target.value.toLowerCase() })}
-            />
-            <span>Personalizar</span>
-          </label>
-        </div>
-        <p className="text-xs text-muted">
-          Cor atual: <strong className="font-medium text-fg">{selectedAccent?.label ?? "Personalizada"}</strong>
-          <span className="ml-2 font-mono">{accent.toUpperCase()}</span>
-        </p>
-        <p className="text-xs text-muted">A cor da disciplina continua sendo usada dentro do espaço dela.</p>
       </div>
 
       <div className="space-y-2">
@@ -140,7 +96,7 @@ function AppearanceSection() {
       <div className="flex justify-end border-t border-line pt-3">
         <Button
           variant="ghost"
-          onClick={() => themeStore.set({ accent: DEFAULT_ACCENT, mode: DEFAULT_THEME_MODE, density: DEFAULT_DENSITY })}
+          onClick={() => themeStore.set({ mode: DEFAULT_THEME_MODE, density: DEFAULT_DENSITY })}
         >
           Restaurar aparência padrão
         </Button>
