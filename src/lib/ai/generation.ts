@@ -181,7 +181,7 @@ export async function generateCategoryToolPayload(job: GenerationJob, signal?: A
   const settings = loadSettings();
   const config = assertReady(settings);
   const context = job.contextText.trim()
-    ? `Material de estudo escolhido pelo estudante:\\n\\n${job.contextText.trim()}`
+    ? `Material de estudo escolhido pelo estudante:\n\n${job.contextText.trim()}`
     : "Nenhum material foi selecionado. Baseie-se apenas no assunto escrito pelo estudante e não invente fontes.";
   const messages: ChatTurn[] = [
     {
@@ -190,7 +190,7 @@ export async function generateCategoryToolPayload(job: GenerationJob, signal?: A
     },
     {
       role: "user",
-      content: `${context}\\n\\nPedido do estudante:\\n${job.requestText}`,
+      content: `${context}\n\nPedido do estudante:\n${job.requestText}`,
     },
   ];
   try {
@@ -221,7 +221,7 @@ export async function generateCategoryToolPayload(job: GenerationJob, signal?: A
     },
     {
       role: "user",
-      content: `${context}\\n\\nPedido do estudante:\\n${job.requestText}\\n\\nContrato JSON exigido:\\n${JSON.stringify(definition.function.parameters)}`,
+      content: `${context}\n\nPedido do estudante:\n${job.requestText}\n\nContrato JSON exigido:\n${JSON.stringify(definition.function.parameters)}`,
     },
   ];
   let response = "";
