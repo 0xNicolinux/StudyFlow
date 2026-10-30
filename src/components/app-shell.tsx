@@ -1,5 +1,5 @@
 "use client";
-import { useState, type CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { Menu, MessageSquare, Timer, X } from "lucide-react";
 import { db } from "@/lib/db";
@@ -60,7 +60,25 @@ export function AppShell() {
   const [dialog, setDialog] = useState<{ open: boolean; subject: Subject | null }>({ open: false, subject: null });
 
   const side = useSidebar();
-  const { accent: preferredAccent } = useLocalStore(themeStore);
+  const { accent: preferredAccent, mode, density } = useLocalStore(themeStore);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const applyTheme = () => {
+      const resolved = mode === "system" ? (media.matches ? "dark" : "light") : mode;
+      root.dataset.theme = resolved;
+      root.style.colorScheme = resolved;
+      root.classList.toggle("dark", resolved === "dark");
+      const themeColor = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+      if (themeColor) themeColor.content = resolved === "dark" ? "#000000" : "#f5f7fb";
+    };
+
+    applyTheme();
+    if (mode !== "system") return;
+    media.addEventListener("change", applyTheme);
+    return () => media.removeEventListener("change", applyTheme);
+  }, [mode]);
   const timer = usePomodoro();
   const chat = useChat(view.kind === "subject" ? view.id : null);
   const activeSubject = useLiveQuery(async () => (view.kind === "subject" ? ((await db.subjects.get(view.id)) ?? null) : undefined), [view]);
@@ -117,7 +135,7 @@ export function AppShell() {
 
   return (
     <ChatCtx.Provider value={chat}>
-    <div className="app-shell-root flex h-dvh" style={globalTheme}>
+    <div className="app-shell-root flex h-dvh" data-density={density} style={globalTheme}>
       {/* Reserva o espaço no layout (largo se fixada, só o trilho se não); a barra em si flutua por cima ao expandir. */}
       <div className={cn("relative hidden shrink-0 md:block", side.animate && "transition-[width] duration-200 ease-out", side.pinned ? "w-72" : "w-14")}>
         <aside
