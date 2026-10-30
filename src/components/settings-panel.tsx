@@ -1,13 +1,13 @@
 "use client";
 import { useRef, useState, type CSSProperties } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { Check, Download, Upload } from "lucide-react";
+import { Check, Download, Monitor, Moon, Sun, Upload } from "lucide-react";
 import { db } from "@/lib/db";
 import { exportBackup, importBackup } from "@/lib/repo";
 import { Button } from "./ui";
 import { AiSection } from "./ai-section";
 import { resetAdaptive } from "./use-adaptive";
-import { ACCENT_OPTIONS, themeStore } from "@/lib/theme-pref";
+import { ACCENT_OPTIONS, DEFAULT_ACCENT, DEFAULT_DENSITY, DEFAULT_THEME_MODE, themeStore, type InterfaceDensity, type ThemeMode, type ThemePreferences } from "@/lib/theme-pref";
 import { useLocalStore } from "./use-local-store";
 
 export function SettingsPanel() {
@@ -22,34 +22,132 @@ export function SettingsPanel() {
 }
 
 function AppearanceSection() {
-  const { accent } = useLocalStore(themeStore);
+  const { accent, mode, density } = useLocalStore(themeStore);
+  const selectedAccent = ACCENT_OPTIONS.find((option) => option.color === accent);
+  const update = (patch: Partial<ThemePreferences>) => {
+    themeStore.set((current) => ({ ...current, ...patch }));
+  };
+
+  const modeOptions = [
+    { value: "light", label: "Claro", description: "Fundo claro e suave", icon: Sun },
+    { value: "dark", label: "Escuro", description: "Menos brilho em ambientes escuros", icon: Moon },
+    { value: "system", label: "Sistema", description: "Acompanha o dispositivo", icon: Monitor },
+  ] as const;
+
+  const densityOptions: { value: InterfaceDensity; label: string; description: string }[] = [
+    { value: "comfortable", label: "Confortável", description: "Mais espaço entre os elementos" },
+    { value: "compact", label: "Compacta", description: "Mais conteúdo na tela" },
+  ];
+
   return (
-    <section className="settings-section space-y-3">
+    <section className="settings-section space-y-5">
       <div>
         <h2 className="text-sm font-semibold">Aparência</h2>
-        <p className="mt-1 text-sm text-muted">Escolha a cor de destaque da interface. Dentro de uma disciplina, a cor dela continua sendo usada.</p>
+        <p className="mt-1 text-sm text-muted">Personalize o tema, a cor de destaque e o espaçamento do StudyFlow.</p>
       </div>
-      <div className="accent-picker">
-        {ACCENT_OPTIONS.map((option) => (
-          <button
-            key={option.color}
-            type="button"
-            aria-label={`Usar cor ${option.label}`}
-            aria-pressed={accent === option.color}
-            title={option.label}
-            onClick={() => themeStore.set({ accent: option.color })}
-            className={`accent-swatch ${accent === option.color ? "is-selected" : ""}`}
-            style={{ "--swatch": option.color } as CSSProperties}
-          >
-            {accent === option.color && <Check size={15} aria-hidden />}
-          </button>
-        ))}
+
+      <div className="space-y-2">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted">Tema</h3>
+        <div className="theme-mode-options" role="group" aria-label="Tema da interface">
+          {modeOptions.map((option) => {
+            const Icon = option.icon;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                aria-pressed={mode === option.value}
+                onClick={() => update({ mode: option.value as ThemeMode })}
+                className={mode === option.value ? "theme-mode-option is-selected" : "theme-mode-option"}
+              >
+                <span className="theme-mode-icon"><Icon size={17} aria-hidden /></span>
+                <span className="theme-mode-copy">
+                  <strong>{option.label}</strong>
+                  <span>{option.description}</span>
+                </span>
+                {mode === option.value && <Check className="theme-mode-check" size={16} aria-hidden />}
+              </button>
+            );
+          })}
+        </div>
+        <p className="text-xs text-muted">
+          {mode === "system"
+            ? "O tema muda automaticamente quando a aparência do seu dispositivo muda."
+            : mode === "light"
+              ? "O modo claro está ativo em todas as áreas do ambiente de estudos."
+              : "O modo escuro está ativo em todas as áreas do ambiente de estudos."}
+        </p>
       </div>
-      <p className="text-xs text-muted">Cor atual: {ACCENT_OPTIONS.find((x) => x.color === accent)?.label ?? "Personalizada"}</p>
+
+      <div className="space-y-2">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted">Cor de destaque</h3>
+        <div className="accent-picker" aria-label="Paleta de cores">
+          {ACCENT_OPTIONS.map((option) => (
+            <button
+              key={option.color}
+              type="button"
+              aria-label={`Usar cor ${option.label}`}
+              aria-pressed={accent === option.color}
+              title={option.label}
+              onClick={() => update({ accent: option.color })}
+              className={accent === option.color ? "accent-swatch is-selected" : "accent-swatch"}
+              style={{ "--swatch": option.color } as CSSProperties}
+            >
+              {accent === option.color && <Check size={15} aria-hidden />}
+            </button>
+          ))}
+          <label className="custom-accent-control" title="Escolher qualquer cor">
+            <input
+              type="color"
+              className="custom-accent-input"
+              aria-label="Escolher cor personalizada"
+              value={accent}
+              onChange={(event) => update({ accent: event.target.value.toLowerCase() })}
+            />
+            <span>Personalizar</span>
+          </label>
+        </div>
+        <p className="text-xs text-muted">
+          Cor atual: <strong className="font-medium text-fg">{selectedAccent?.label ?? "Personalizada"}</strong>
+          <span className="ml-2 font-mono">{accent.toUpperCase()}</span>
+        </p>
+        <p className="text-xs text-muted">A cor da disciplina continua sendo usada dentro do espaço dela.</p>
+      </div>
+
+      <div className="space-y-2">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted">Espaçamento</h3>
+        <div className="theme-density-options" role="group" aria-label="Densidade da interface">
+          {densityOptions.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              aria-pressed={density === option.value}
+              onClick={() => update({ density: option.value })}
+              className={density === option.value ? "theme-density-option is-selected" : "theme-density-option"}
+            >
+              <span className="theme-density-indicator" aria-hidden>
+                <span /><span /><span />
+              </span>
+              <span className="theme-density-copy">
+                <strong>{option.label}</strong>
+                <span>{option.description}</span>
+              </span>
+              {density === option.value && <Check size={15} aria-hidden />}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex justify-end border-t border-line pt-3">
+        <Button
+          variant="ghost"
+          onClick={() => themeStore.set({ accent: DEFAULT_ACCENT, mode: DEFAULT_THEME_MODE, density: DEFAULT_DENSITY })}
+        >
+          Restaurar aparência padrão
+        </Button>
+      </div>
     </section>
   );
 }
-
 function BackupSection() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
