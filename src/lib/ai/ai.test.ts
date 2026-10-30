@@ -2,7 +2,7 @@ import "fake-indexeddb/auto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { IDBFactory } from "fake-indexeddb";
 import { AiError, type ChatStreamEvent } from "./types";
-import { streamOpenAiCompatible } from "./openai-compatible";
+import { errorFromResponse, streamOpenAiCompatible } from "./openai-compatible";
 import { DEFAULT_SETTINGS, __setStore, assertReady, fetchModels, loadSettings, saveSettings, validateBaseUrl } from "./settings";
 import { LIMITS, buildContextItems, buildMessages } from "./context";
 import { StudyFlowDB, db, __setDb } from "../db";
@@ -93,6 +93,16 @@ describe("streaming", () => {
       expect(await kindOf(collectText(streamOpenAiCompatible(req(f))))).toBe(kind);
     },
   );
+
+  it("detecta provedores sem endpoint que aceite tool use", async () => {
+    const response = new Response(JSON.stringify({ error: { message: "No endpoints found that support tool use." } }), { status: 400 });
+    expect((await errorFromResponse(response, true)).kind).toBe("tools_unsupported");
+  });
+
+  it("não classifica erro HTTP comum como falta de suporte a ferramentas", async () => {
+    const response = new Response(JSON.stringify({ error: { message: "Invalid parameter: max_tokens." } }), { status: 400 });
+    expect((await errorFromResponse(response, true)).kind).toBe("bad_request");
+  });
 
   it("falha de rede vira 'network' e a mensagem não contém a chave", async () => {
     const f = vi.fn().mockRejectedValue(new TypeError("Failed to fetch"));
