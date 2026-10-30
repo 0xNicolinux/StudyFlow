@@ -11,8 +11,8 @@
   --border-strong: #38454a;
   --fg: #f2f2f2;
   --fg-muted: #858585;
-  --accent: #9fe9f7;
-  --accent-fg: #071014;
+  --accent: #f5f5f5;
+  --accent-fg: #050505;
   --danger: #ff7777;
   --success: #9be2b7;
   --warning: #e8c97b;
@@ -27,6 +27,8 @@
   --border-strong: #b8c4d3;
   --fg: #000000;
   --fg-muted: #000000;
+  --accent: #111111;
+  --accent-fg: #ffffff;
   --danger: #c43d4b;
   --success: #237a4b;
   --warning: #946200;
@@ -272,7 +274,7 @@ button, a { touch-action: manipulation; }
   text-decoration: none;
   transition: color 150ms ease, background 150ms ease, border-color 150ms ease;
 }
-.landing-enter:hover { border-color: var(--accent); background: var(--accent); color: #071014; }
+.landing-enter:hover { border-color: var(--accent); background: var(--accent); color: var(--accent-fg); }
 .landing-enter:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
 .landing-enter-arrow { transition: transform 150ms ease; }
 .landing-enter:hover .landing-enter-arrow { transform: translateX(3px); }
@@ -423,7 +425,7 @@ button, a { touch-action: manipulation; }
   line-height: .8;
   text-shadow: 0 3px 32px rgba(0,0,0,.34);
 }
-.landing-copy-overlay .landing-title > span { color: #9fe9f7; }
+.landing-copy-overlay .landing-title > span { color: #ffffff; }
 .landing-copy-overlay .landing-subtitle {
   margin-top: clamp(24px, 4vh, 38px);
   color: rgba(244,247,248,.94);
@@ -467,7 +469,7 @@ button, a { touch-action: manipulation; }
   color: rgba(220,227,231,.48);
 }
 .landing-footer-overlay .landing-credit { color: rgba(220,227,231,.55); }
-.landing-footer-overlay .landing-credit:hover { color: #9fe9f7; }
+.landing-footer-overlay .landing-credit:hover { color: #ffffff; }
 @media (min-width: 761px) {
   .landing-copy-overlay { padding-right: 0; }
 }
