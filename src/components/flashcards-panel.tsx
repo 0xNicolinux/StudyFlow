@@ -1,12 +1,13 @@
 "use client";
 import { useEffect, useRef, useState, type TextareaHTMLAttributes } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { Pencil, Play, Trash2 } from "lucide-react";
+import { Pencil, Play, Sparkles, Trash2 } from "lucide-react";
 import { db } from "@/lib/db";
 import { createFlashcard, deleteFlashcard, reviewFlashcard, updateFlashcard } from "@/lib/study-repo";
 import { GRADE_LABELS, previewLabel, type Grade } from "@/lib/srs";
 import { dueCount, retention } from "@/lib/stats";
 import { useNow } from "./use-now";
+import { useGeneration } from "./generation-provider";
 import { cn } from "@/lib/cn";
 import { Button, EmptyState, Field, IconButton, Loading, Modal } from "./ui";
 import type { Flashcard } from "@/lib/schemas";
@@ -42,6 +43,18 @@ export function FlashcardsPanel({ subjectId }: { subjectId?: string }) {
   const [reviewing, setReviewing] = useState<string[] | null>(null);
   const [editing, setEditing] = useState<Flashcard | null>(null);
   const now = useNow();
+  const generation = useGeneration();
+
+  useEffect(() => {
+    void generation.markKindViewed("flashcards");
+  }, [generation.jobs, generation.markKindViewed]);
+
+  useEffect(() => {
+    const target = generation.openTarget;
+    if (target?.kind !== "flashcards" || !cards) return;
+    document.getElementById("flashcard-" + target.contentId)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    generation.clearOpenTarget();
+  }, [generation.openTarget, generation.clearOpenTarget, cards]);
 
   if (!cards || !subjects) return <Loading />;
   const due = cards.filter((c) => c.dueAt <= now).sort((a, b) => a.dueAt - b.dueAt);
@@ -55,7 +68,8 @@ export function FlashcardsPanel({ subjectId }: { subjectId?: string }) {
         <div className="study-stat rounded-lg border border-line bg-surface px-3 py-2.5 text-sm"><span className="text-muted">Cartões </span><strong className="tabular-nums">{cards.length}</strong></div>
         <div className="study-stat rounded-lg border border-line bg-surface px-3 py-2 text-sm"><span className="text-muted">Para revisar </span><strong className="tabular-nums">{dueCount(cards, now)}</strong></div>
         <div className="study-stat rounded-lg border border-line bg-surface px-3 py-2 text-sm"><span className="text-muted">Acertos nas revisões </span><strong className="tabular-nums">{ret === null ? "—" : `${ret}%`}</strong></div>
-        <Button variant="primary" className="ml-auto min-h-10 px-4" disabled={due.length === 0} onClick={() => setReviewing(due.map((c) => c.id))}><Play className="size-4" aria-hidden /> Revisar{due.length > 0 && ` (${due.length})`}</Button>
+        <Button variant="ghost" className="ml-auto min-h-10 px-3" onClick={() => generation.openDialog("flashcards", subjectId)}><Sparkles className="size-4" aria-hidden /> Gerar com IA</Button>
+        <Button variant="primary" className="min-h-10 px-4" disabled={due.length === 0} onClick={() => setReviewing(due.map((c) => c.id))}><Play className="size-4" aria-hidden /> Revisar{due.length > 0 && ` (${due.length})`}</Button>
       </div>
 
       <CardForm key={cards.length} subjectId={subjectId} subjects={subjects} />
@@ -63,7 +77,7 @@ export function FlashcardsPanel({ subjectId }: { subjectId?: string }) {
       {cards.length === 0 ? <EmptyState title="Nenhum cartão ainda" hint="Crie cartões com pergunta e resposta; o app agenda as revisões para você." /> : (
         <ul className="study-rows divide-y divide-line rounded-lg border border-line bg-surface">
           {cards.slice().sort((a, b) => a.dueAt - b.dueAt).map((c) => (
-            <li key={c.id} className="study-row flex items-center gap-3 px-3 py-2.5">
+            <li key={c.id} id={"flashcard-" + c.id} className="study-row flex items-center gap-3 px-3 py-2.5">
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm">{c.front}</p>
                 <p className="text-xs text-muted">{c.dueAt <= now ? "Para revisar agora" : `Próxima revisão: ${new Date(c.dueAt).toLocaleDateString("pt-BR")}`}{subjectId === undefined && subjects.find((s) => s.id === c.subjectId) && ` · ${subjects.find((s) => s.id === c.subjectId)!.name}`}</p>
