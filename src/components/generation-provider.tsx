@@ -22,6 +22,7 @@ type DialogRequest = { kind: GenerationKind; subjectId?: string } | null;
 export type GenerationOpenTarget = { kind: GenerationKind; contentId: string; jobId: string } | null;
 
 type GenerationContextValue = {
+  jobs: GenerationJob[];
   openDialog: (kind: GenerationKind, subjectId?: string) => void;
   openTarget: GenerationOpenTarget;
   clearOpenTarget: () => void;
@@ -184,6 +185,8 @@ export function GenerationProvider({
     if (job.status === "completed" && job.contentId) {
       setOpenTarget({ kind: job.kind, contentId: job.contentId, jobId: job.id });
       void markGenerationViewed(job.id).catch(() => undefined);
+    } else if (job.status === "failed") {
+      setDialog({ kind: job.kind, subjectId: job.subjectId ?? undefined });
     }
     onOpenJob(job);
   }, [onOpenJob]);
@@ -191,8 +194,9 @@ export function GenerationProvider({
   const clearOpenTarget = useCallback(() => setOpenTarget(null), []);
 
   const value = useMemo<GenerationContextValue>(() => ({
+    jobs: jobs ?? [],
     openDialog, openTarget, clearOpenTarget, markKindViewed, retry, enqueueChatToolCall,
-  }), [openDialog, openTarget, clearOpenTarget, markKindViewed, retry, enqueueChatToolCall]);
+  }), [jobs, openDialog, openTarget, clearOpenTarget, markKindViewed, retry, enqueueChatToolCall]);
 
   const notifications = (jobs ?? []).filter((job) =>
     (job.status === "completed" && job.viewedAt === null || job.status === "failed") && !dismissed.has(job.id),
@@ -207,7 +211,7 @@ export function GenerationProvider({
           request={dialog}
           onClose={() => setDialog(null)}
           onSubmit={submitDialog}
-          onOpenLibrary={onOpenLibrary}
+          onOpenLibrary={() => { setDialog(null); onOpenLibrary(); }}
         />
       )}
       <div className="pointer-events-none fixed bottom-4 right-4 z-[80] flex w-[min(92vw,24rem)] flex-col gap-2" aria-live="polite">
