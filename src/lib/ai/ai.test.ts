@@ -15,7 +15,7 @@ const req = (fetchImpl: typeof fetch) => ({ baseUrl: "https://x.test/api/v1/", a
 async function collect(g: AsyncGenerator<ChatStreamEvent>) { const events: ChatStreamEvent[] = []; for await (const event of g) events.push(event); return events; }
 async function collectText(g: AsyncGenerator<ChatStreamEvent>) { return (await collect(g)).filter((e) => e.type === "text").map((e) => e.text).join(""); }
 const toolDelta = (index: number, fn: { name?: string; arguments?: string }, id?: string) =>
-  `data: ${JSON.stringify({ choices: [{ delta: { tool_calls: [{ index, ...(id ? { id, type: "function" } : {}), function: fn }] } }] })}\\n\\n`;
+  `data: ${JSON.stringify({ choices: [{ delta: { tool_calls: [{ index, ...(id ? { id, type: "function" } : {}), function: fn }] } }] })}\n\n`;
 async function kindOf(p: Promise<unknown>) { try { await p; return "none"; } catch (e) { return e instanceof AiError ? e.kind : "other"; } }
 
 describe("streaming", () => {
@@ -29,10 +29,11 @@ describe("streaming", () => {
   });
 
   it("remonta tool calls com argumentos JSON divididos em vários deltas", async () => {
+    const args = JSON.stringify({ title: "POO", cards: [{ front: "Classe?" }] });
     const f = vi.fn().mockResolvedValue(sse(
-      toolDelta(0, { name: "create_flashcards", arguments: "{\\"title\\":\\"POO\\",\\"cards\\":[{\\"front\\":\\"Classe?" }, "call-0"),
-      toolDelta(0, { arguments: "\\"}]}"}),
-      "data: [DONE]\\n\\n",
+      toolDelta(0, { name: "create_flashcards", arguments: args.slice(0, 18) }, "call-0"),
+      toolDelta(0, { arguments: args.slice(18) }),
+      "data: [DONE]\n\n",
     ));
     const events = await collect(streamOpenAiCompatible({
       ...req(f),
@@ -47,9 +48,9 @@ describe("streaming", () => {
 
   it("remonta múltiplas ferramentas pela ordem dos índices", async () => {
     const f = vi.fn().mockResolvedValue(sse(
-      toolDelta(1, { name: "create_quiz", arguments: "{\\"title\\":\\"Q\\"}" }, "call-1"),
-      toolDelta(0, { name: "create_note", arguments: "{\\"title\\":\\"N\\"}" }, "call-0"),
-      "data: [DONE]\\n\\n",
+      toolDelta(1, { name: "create_quiz", arguments: JSON.stringify({ title: "Q" }) }, "call-1"),
+      toolDelta(0, { name: "create_note", arguments: JSON.stringify({ title: "N" }) }, "call-0"),
+      "data: [DONE]\n\n",
     ));
     const events = await collect(streamOpenAiCompatible(req(f)));
     expect(events.map((event) => event.type === "tool_call" ? [event.id, event.name, event.arguments] : event)).toEqual([
@@ -61,13 +62,13 @@ describe("streaming", () => {
   it("rejeita argumentos de ferramenta que não formam JSON", async () => {
     const f = vi.fn().mockResolvedValue(sse(
       toolDelta(0, { name: "create_note", arguments: "{invalid" }, "call-0"),
-      "data: [DONE]\\n\\n",
+      "data: [DONE]\n\n",
     ));
     expect(await kindOf(collect(streamOpenAiCompatible(req(f))))).toBe("tool_call_invalid");
   });
 
   it("mantém eventos de texto quando não há tool calls", async () => {
-    const f = vi.fn().mockResolvedValue(sse(chunk("resposta"), "data: [DONE]\\n\\n"));
+    const f = vi.fn().mockResolvedValue(sse(chunk("resposta"), "data: [DONE]\n\n"));
     expect(await collect(streamOpenAiCompatible(req(f)))).toEqual([{ type: "text", text: "resposta" }]);
   });
 
