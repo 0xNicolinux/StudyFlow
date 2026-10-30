@@ -1,5 +1,8 @@
 import { z } from "zod";
-import type { ToolDefinition } from "./types";
+import { AiError, type ChatTurn, type ToolDefinition } from "./types";
+import type { GenerationJob } from "../schemas";
+import { getProvider } from "./openai-compatible";
+import { assertReady, loadSettings } from "./settings";
 import { createNote } from "../repo";
 import { createFlashcardsBatch, saveQuiz } from "../study-repo";
 
@@ -155,4 +158,41 @@ export async function dispatchGenerationTool(name: string, args: unknown, subjec
       return { kind: "note", title: saved.title, contentId: saved.id, count: 1 };
     }
   }
+}
+
+/** Gera um payload usando somente a ferramenta correspondente ao tipo solicitado pela categoria. */
+export async function generateCategoryToolPayload(job: GenerationJob, signal?: AbortSignal): Promise<unknown> {
+  const definition = GenerationToolDefinitions.find((tool) => tool.function.name === job.toolName);
+  if (!definition) throw new Error("Tipo de conteúdo não permitido.");
+  const settings = loadSettings();
+  const config = assertReady(settings);
+  const context = job.contextText.trim()
+    ? `Material de estudo escolhido pelo estudante:\\n\\n${job.contextText.trim()}`
+    : "Nenhum material foi selecionado. Baseie-se apenas no assunto escrito pelo estudante e não invente fontes.";
+  const messages: ChatTurn[] = [
+    {
+      role: "system",
+      content: "Você é o gerador de conteúdo de estudo do StudyFlow. Produza conteúdo correto, didático e em português brasileiro. Use exclusivamente a ferramenta fornecida para criar o conteúdo solicitado. Não responda com Markdown ou texto no lugar da ferramenta. Respeite a quantidade solicitada e não invente referências.",
+    },
+    {
+      role: "user",
+      content: `${context}\\n\\nPedido do estudante:\\n${job.requestText}`,
+    },
+  ];
+  const calls = [];
+  for await (const event of getProvider(settings.provider).streamChat({
+    ...config,
+    messages,
+    tools: [definition],
+    toolChoice: { type: "function", function: { name: job.toolName } },
+    signal,
+  })) {
+    if (event.type !== "tool_call") continue;
+    if (event.name !== job.toolName) throw new AiError("tool_call_invalid", "O modelo tentou usar uma ferramenta diferente da solicitada.");
+    calls.push(event);
+  }
+  if (calls.length !== 1) {
+    throw new AiError("tools_unsupported", "O modelo não retornou uma chamada estruturada válida. Tente outro modelo ou use a criação manual.");
+  }
+  return validateGenerationToolCall(job.toolName, calls[0].arguments).data;
 }
