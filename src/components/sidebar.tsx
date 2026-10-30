@@ -77,7 +77,7 @@ export function Sidebar({ view, onNavigate, onNewSubject, onEditSubject, onDelet
             key={kind}
             onClick={() => onNavigate({ kind })}
             aria-current={view.kind === kind ? "page" : undefined}
-            className={cn(ROW, "sidebar-nav-item", view.kind === kind ? "text-fg" : "", collapsed && "justify-center px-0")}
+            className={cn(ROW, "sidebar-nav-item", view.kind === kind ? "text-fg" : "", collapsed && "sidebar-nav-item--collapsed justify-center px-0")}
           >
             <Icon className="size-4 shrink-0" aria-hidden /> <span className={cn(fade(collapsed), collapsed && "w-0")}>{label}</span>
           </button>
@@ -135,7 +135,7 @@ export function Sidebar({ view, onNavigate, onNewSubject, onEditSubject, onDelet
         <button
           onClick={() => onNavigate({ kind: "settings" })}
           aria-current={view.kind === "settings" ? "page" : undefined}
-          className={cn(ROW, "sidebar-nav-item", view.kind === "settings" ? "text-fg" : "", collapsed && "justify-center px-0")}
+          className={cn(ROW, "sidebar-nav-item", view.kind === "settings" ? "text-fg" : "", collapsed && "sidebar-nav-item--collapsed justify-center px-0")}
         >
           <Settings className="size-4 shrink-0" aria-hidden /> <span className={cn(fade(collapsed), collapsed && "w-0")}>Configurações</span>
         </button>
