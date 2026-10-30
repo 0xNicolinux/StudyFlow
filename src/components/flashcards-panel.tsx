@@ -13,17 +13,16 @@ import type { Flashcard } from "@/lib/schemas";
 
 const textarea = "block w-full min-h-10 resize-none overflow-hidden rounded-lg border border-line bg-surface px-3 py-2 text-sm leading-6 focus:border-accent focus:outline-none";
 
+function fitTextarea(element: HTMLTextAreaElement | null) {
+  if (!element) return;
+  element.style.height = "auto";
+  element.style.height = `${element.scrollHeight}px`;
+}
+
 function AutoGrowTextarea({ className, value, onInput, ...props }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
   const ref = useRef<HTMLTextAreaElement>(null);
 
-  function resize() {
-    const element = ref.current;
-    if (!element) return;
-    element.style.height = "auto";
-    element.style.height = `${element.scrollHeight}px`;
-  }
-
-  useEffect(resize, [value]);
+  useEffect(() => { fitTextarea(ref.current); }, [value]);
 
   return (
     <textarea
@@ -31,7 +30,7 @@ function AutoGrowTextarea({ className, value, onInput, ...props }: TextareaHTMLA
       ref={ref}
       value={value}
       rows={1}
-      onInput={(event) => { resize(); onInput?.(event); }}
+      onInput={(event) => { fitTextarea(event.currentTarget); onInput?.(event); }}
       className={cn(textarea, className)}
     />
   );
