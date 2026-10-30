@@ -62,7 +62,7 @@ describe("generation tools", () => {
       title: "POO",
       cards: [{ front: "Classe?", back: "Um molde." }],
     });
-    expect(parseCategoryFallbackText("create_flashcards", ```json\\n${json}\\n```)).toEqual({
+    expect(parseCategoryFallbackText("create_flashcards", "```json\\n" + json + "\\n```")).toEqual({
       title: "POO",
       cards: [{ front: "Classe?", back: "Um molde." }],
     });
