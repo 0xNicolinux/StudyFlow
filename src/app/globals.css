@@ -500,15 +500,15 @@ button, a { touch-action: manipulation; }
 
 /* Sidebar: o trilho recolhido tem de continuar a ser uma navegação utilizável. */
 .app-sidebar {
-  background: #080808;
-  border-color: #292929;
+  background: var(--surface);
+  border-color: var(--border);
 }
 .app-sidebar .sidebar-nav-item {
   display: flex;
   min-height: 42px;
   align-items: center;
   gap: 12px;
-  color: #a4a4a4;
+  color: var(--fg-muted);
 }
 .app-sidebar .sidebar-nav-item svg {
   display: block;
@@ -520,8 +520,8 @@ button, a { touch-action: manipulation; }
   color: currentColor;
 }
 .app-sidebar .sidebar-nav-item[aria-current="page"] {
-  color: #9fe9f7;
-  background: #171a1b;
+  color: var(--accent);
+  background: var(--surface-2);
 }
 .app-sidebar .sidebar-profile-row { min-width: 0; }
 .app-sidebar .sidebar-subject-item > button > span:first-child {
@@ -807,7 +807,7 @@ div, main, aside { scrollbar-width: thin; scrollbar-color: var(--border-strong) 
 
 
 /* Controles de aparência e acessibilidade visual. */
-.theme-mode-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
+.theme-mode-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
 .theme-mode-option, .theme-density-option {
   display: flex;
   min-width: 0;
@@ -847,9 +847,6 @@ div, main, aside { scrollbar-width: thin; scrollbar-color: var(--border-strong) 
 .theme-density-indicator span { height: 4px; border-radius: 3px; background: var(--border-strong); }
 .theme-density-option.is-selected .theme-density-indicator span { background: var(--accent); }
 .theme-density-option > svg { flex: 0 0 auto; margin-left: auto; color: var(--accent); }
-.custom-accent-control { display: inline-flex; min-height: 36px; align-items: center; gap: 7px; padding: 3px 9px 3px 4px; border: 1px solid var(--border); border-radius: 999px; color: var(--fg-muted); font-size: .72rem; cursor: pointer; }
-.custom-accent-control:hover { border-color: var(--border-strong); color: var(--fg); }
-.custom-accent-input { width: 27px; height: 27px; padding: 2px; border: 1px solid var(--border) !important; border-radius: 50% !important; background: var(--surface) !important; cursor: pointer; }
 .app-shell-root[data-density="compact"] .app-topbar { min-height: 54px; }
 .app-shell-root[data-density="compact"] .app-workspace { padding: 1rem 1.25rem; }
 .app-shell-root[data-density="compact"] .metric-card { padding: .7rem; }
