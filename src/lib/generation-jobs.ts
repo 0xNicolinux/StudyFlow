@@ -63,7 +63,7 @@ export async function claimNextGenerationJob(now = Date.now()): Promise<Generati
 
 export async function completeGenerationJob(
   id: string,
-  result: { contentId: string; count: number },
+  result: { contentId: string; count: number; title?: string },
   now = Date.now(),
 ): Promise<GenerationJob> {
   let completed: GenerationJob | undefined;
@@ -76,6 +76,7 @@ export async function completeGenerationJob(
       completedAt: now,
       contentId: result.contentId,
       count: result.count,
+      title: result.title ?? current.title,
       error: null,
     });
     await db.generationJobs.put(completed);
