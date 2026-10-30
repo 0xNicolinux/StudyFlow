@@ -1,6 +1,6 @@
 import { AiError, type AiProvider, type StreamRequest, type ToolCall } from "./types";
 
-const joinUrl = (base: string, path: string) => base.replace(/\\/+$/, "") + path;
+const joinUrl = (base: string, path: string) => `${base.endsWith("/") ? base.slice(0, -1) : base}${path.startsWith("/") ? path : `/${path}`}`;
 
 type PartialToolCall = { id?: string; name: string; arguments: string };
 
