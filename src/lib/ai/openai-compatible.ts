@@ -91,7 +91,6 @@ export async function* streamOpenAiCompatible(req: StreamRequest): AsyncGenerato
     try { obj = JSON.parse(data); } catch { return null; }
     if (obj.error) throw new AiError("stream", `O provedor interrompeu a resposta: ${String(obj.error.message ?? "erro desconhecido").slice(0, 200)}`);
     const delta = obj.choices?.[0]?.delta;
-    if (typeof delta?.content === "string" && delta.content) return delta.content;
     for (const tool of delta?.tool_calls ?? []) {
       const index = tool.index ?? 0;
       const current = partialTools.get(index) ?? { name: "", arguments: "" };
@@ -100,7 +99,7 @@ export async function* streamOpenAiCompatible(req: StreamRequest): AsyncGenerato
       if (tool.function?.arguments) current.arguments += tool.function.arguments;
       partialTools.set(index, current);
     }
-    return null;
+    return typeof delta?.content === "string" && delta.content ? delta.content : null;
   };
 
   try {
@@ -109,7 +108,7 @@ export async function* streamOpenAiCompatible(req: StreamRequest): AsyncGenerato
       if (done) break;
       buffer += decoder.decode(value, { stream: true });
       let nl: number;
-      while ((nl = buffer.indexOf("\\n")) >= 0) {
+      while ((nl = buffer.indexOf("\n")) >= 0) {
         const line = buffer.slice(0, nl);
         buffer = buffer.slice(nl + 1);
         const text = processDataLine(line);
