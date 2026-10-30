@@ -2,7 +2,6 @@ import "fake-indexeddb/auto";
 import { beforeEach, describe, expect, it } from "vitest";
 import { IDBFactory } from "fake-indexeddb";
 import { StudyFlowDB, db, __setDb } from "../db";
-import { createNote } from "../repo";
 import { GenerationToolDefinitions, dispatchGenerationTool, validateGenerationToolCall } from "./generation";
 
 beforeEach(() => {
