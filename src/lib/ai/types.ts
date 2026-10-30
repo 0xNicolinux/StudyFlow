@@ -17,15 +17,18 @@ export type ToolDefinition = {
   function: { name: string; description?: string; parameters: Record<string, unknown>; strict?: boolean };
 };
 export type ToolChoice = "auto" | "none" | "required" | { type: "function"; function: { name: string } };
+export type ToolCall = { id: string; name: string; arguments: unknown };
 export type ChatStreamEvent =
   | { type: "text"; text: string }
-  | { type: "tool_call"; id: string; name: string; arguments: unknown };
+  | ({ type: "tool_call" } & ToolCall);
 
 export type StreamRequest = {
   baseUrl: string;
   apiKey: string;
   model: string;
   messages: ChatTurn[];
+  tools?: ToolDefinition[];
+  toolChoice?: ToolChoice;
   signal?: AbortSignal;
   fetchImpl?: typeof fetch;
 };
