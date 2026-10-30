@@ -24,7 +24,7 @@ import { Composer } from "./composer";
 import { useChat } from "./use-chat";
 import { useSidebar } from "./use-sidebar";
 import { trackPanel, trackSubject, untrackSubject } from "./use-adaptive";
-import { DEFAULT_ACCENT, themeStore } from "@/lib/theme-pref";
+import { themeStore } from "@/lib/theme-pref";
 import { useLocalStore } from "./use-local-store";
 import { IconButton, Loading } from "./ui";
 import type { Subject } from "@/lib/schemas";
@@ -119,14 +119,13 @@ export function AppShell() {
   };
 
   // Ao entrar numa disciplina, o acento da área de trabalho assume a cor dela (botões, abas, foco).
-  const globalTheme: CSSProperties = { "--accent": DEFAULT_ACCENT, "--accent-fg": readableOn(DEFAULT_ACCENT) } as CSSProperties;
-  const accent: CSSProperties = view.kind === "subject" && activeSubject
+  const accent: CSSProperties | undefined = view.kind === "subject" && activeSubject
     ? ({ "--accent": activeSubject.color, "--accent-fg": readableOn(activeSubject.color) } as CSSProperties)
-    : ({ "--accent": DEFAULT_ACCENT, "--accent-fg": readableOn(DEFAULT_ACCENT) } as CSSProperties);
+    : undefined;
 
   return (
     <ChatCtx.Provider value={chat}>
-    <div className="app-shell-root flex h-dvh" data-density={density} style={globalTheme}>
+    <div className="app-shell-root flex h-dvh" data-density={density}>
       {/* Reserva o espaço no layout (largo se fixada, só o trilho se não); a barra em si flutua por cima ao expandir. */}
       <div className={cn("relative hidden shrink-0 md:block", side.animate && "transition-[width] duration-200 ease-out", side.pinned ? "w-72" : "w-14")}>
         <aside
