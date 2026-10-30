@@ -26,7 +26,7 @@
   --border: #d7dee8;
   --border-strong: #b8c4d3;
   --fg: #000000;
-  --fg-muted: #171717;
+  --fg-muted: #000000;
   --danger: #c43d4b;
   --success: #237a4b;
   --warning: #946200;
@@ -870,7 +870,7 @@ div, main, aside { scrollbar-width: thin; scrollbar-color: var(--border-strong) 
 :root[data-theme="light"] .sidebar-section-label,
 :root[data-theme="light"] .profile-metadata span,
 :root[data-theme="light"] .profile-delete {
-  color: #171717;
+  color: #000000;
 }
 :root[data-theme="light"] .sidebar-nav-item[aria-current="page"] {
   color: #000000;
