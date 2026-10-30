@@ -49,7 +49,9 @@ export function useChat(activeSubjectId: string | null) {
       const settings = loadSettings();
       const all = await db.messages.where("conversationId").equals(convId).sortBy("createdAt");
       const history = (persistUser ? all : all.slice(0, -1)).map((m) => ({ role: m.role, content: m.content }));
-      if (persistUser) await addMessage(convId, "user", text);
+      const sourceMessageId = persistUser
+        ? (await addMessage(convId, "user", text)).id
+        : [...all].reverse().find((message) => message.role === "user")?.id ?? crypto.randomUUID();
       const { messages } = buildMessages(history, text, items);
       messages[0].content += " Quando o estudante solicitar explicitamente a criação de flashcards, quiz ou anotação, use a ferramenta correspondente. Não use ferramentas para perguntas conceituais ou simples pedidos de explicação. Se faltar um assunto essencial, faça uma pergunta de esclarecimento em texto antes de criar. Nunca diga que salvou: apenas solicite a criação; o aplicativo valida e salva.";
       const toolCalls: Array<{ id: string; name: string; arguments: unknown }> = [];
@@ -74,7 +76,6 @@ export function useChat(activeSubjectId: string | null) {
         validated: validateGenerationToolCall(call.name, call.arguments),
       }));
       if (validatedCalls.length) {
-        const requestId = crypto.randomUUID();
         const contextText = contextToText(items);
         for (const call of validatedCalls) {
           await enqueueGenerationJob({
@@ -82,7 +83,7 @@ export function useChat(activeSubjectId: string | null) {
             title: call.validated.title,
             subjectId: activeSubjectId,
             source: "chat",
-            sourceKey: `${convId}:${requestId}:${call.id}`,
+            sourceKey: `${convId}:${sourceMessageId}:${call.id}`,
             toolName: call.name as GenerationToolName,
             payload: call.validated.data,
             requestText: text,
@@ -112,7 +113,7 @@ export function useChat(activeSubjectId: string | null) {
       // O texto de streaming permanece até a mensagem gravada aparecer na lista (a tela decide quando ocultá-lo); evita uma "piscada".
       setStreaming(false); abortRef.current = null;
     }
-  }, []);
+  }, [activeSubjectId]);
 
   const start = useCallback(async (text: string, items: ContextItem[]) => {
     let convId = conversationId;
