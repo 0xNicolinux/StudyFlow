@@ -18,8 +18,8 @@ export function NotesPanel({ subjectId }: { subjectId?: string }) {
   const generation = useGeneration();
 
   useEffect(() => {
-    void generation.markKindViewed("note");
-  }, [generation.jobs, generation.markKindViewed]);
+    void generation.markKindViewed("note", subjectId);
+  }, [generation.jobs, generation.markKindViewed, subjectId]);
 
   useEffect(() => {
     const target = generation.openTarget;
