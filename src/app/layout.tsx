@@ -9,11 +9,11 @@ export const metadata: Metadata = {
   icons: { icon: "/icons/icon.svg", apple: "/icons/icon-192.png" },
 };
 
-export const viewport: Viewport = { themeColor: "#000000", colorScheme: "dark" };
+export const viewport: Viewport = { themeColor: "#000000" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" className="dark h-full antialiased">
+    <html lang="pt-BR" data-theme="dark" className="dark h-full antialiased">
       <body className="min-h-full">
         {children}
         <SwRegister />

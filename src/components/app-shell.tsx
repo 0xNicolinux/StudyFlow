@@ -1,5 +1,5 @@
 "use client";
-import { useState, type CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { Menu, MessageSquare, Timer, X } from "lucide-react";
 import { db } from "@/lib/db";
@@ -60,7 +60,16 @@ export function AppShell() {
   const [dialog, setDialog] = useState<{ open: boolean; subject: Subject | null }>({ open: false, subject: null });
 
   const side = useSidebar();
-  const { accent: preferredAccent } = useLocalStore(themeStore);
+  const { mode, density } = useLocalStore(themeStore);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.dataset.theme = mode;
+    root.style.colorScheme = mode;
+    root.classList.toggle("dark", mode === "dark");
+    const themeColor = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+    if (themeColor) themeColor.content = mode === "dark" ? "#000000" : "#f5f7fb";
+  }, [mode]);
   const timer = usePomodoro();
   const chat = useChat(view.kind === "subject" ? view.id : null);
   const activeSubject = useLiveQuery(async () => (view.kind === "subject" ? ((await db.subjects.get(view.id)) ?? null) : undefined), [view]);
@@ -110,14 +119,13 @@ export function AppShell() {
   };
 
   // Ao entrar numa disciplina, o acento da área de trabalho assume a cor dela (botões, abas, foco).
-  const globalTheme: CSSProperties = { "--accent": preferredAccent, "--accent-fg": readableOn(preferredAccent) } as CSSProperties;
-  const accent: CSSProperties = view.kind === "subject" && activeSubject
+  const accent: CSSProperties | undefined = view.kind === "subject" && activeSubject
     ? ({ "--accent": activeSubject.color, "--accent-fg": readableOn(activeSubject.color) } as CSSProperties)
-    : ({ "--accent": preferredAccent, "--accent-fg": readableOn(preferredAccent) } as CSSProperties);
+    : undefined;
 
   return (
     <ChatCtx.Provider value={chat}>
-    <div className="app-shell-root flex h-dvh" style={globalTheme}>
+    <div className="app-shell-root flex h-dvh" data-density={density}>
       {/* Reserva o espaço no layout (largo se fixada, só o trilho se não); a barra em si flutua por cima ao expandir. */}
       <div className={cn("relative hidden shrink-0 md:block", side.animate && "transition-[width] duration-200 ease-out", side.pinned ? "w-72" : "w-14")}>
         <aside

@@ -1,25 +1,22 @@
 import { createLocalStore } from "./local-store";
 
-export const ACCENT_OPTIONS = [
-  { color: "#9fe9f7", label: "Gelo" },
-  { color: "#a78bfa", label: "Violeta" },
-  { color: "#60a5fa", label: "Azul" },
-  { color: "#34d399", label: "Menta" },
-  { color: "#fbbf24", label: "Âmbar" },
-  { color: "#fb7185", label: "Rosa" },
-  { color: "#f97316", label: "Laranja" },
-  { color: "#c4b5fd", label: "Lavanda" },
-  { color: "#2dd4bf", label: "Turquesa" },
-  { color: "#f472b6", label: "Pink" },
-  { color: "#bef264", label: "Lima" },
-  { color: "#e5e7eb", label: "Prata" },
-] as const;
+export const DEFAULT_THEME_MODE = "dark" as const;
+export const DEFAULT_DENSITY = "comfortable" as const;
 
-export const DEFAULT_ACCENT = "#9fe9f7";
+export type ThemeMode = "light" | "dark";
+export type InterfaceDensity = "comfortable" | "compact";
+export type ThemePreferences = {
+  mode: ThemeMode;
+  density: InterfaceDensity;
+};
 
-export const themeStore = createLocalStore("studyflow.theme.v1", (raw: unknown) => {
-  const value = typeof raw === "object" && raw !== null && "accent" in raw
-    ? (raw as { accent?: unknown }).accent
-    : undefined;
-  return { accent: typeof value === "string" && ACCENT_OPTIONS.some((o) => o.color === value) ? value : DEFAULT_ACCENT };
+export const themeStore = createLocalStore<ThemePreferences>("studyflow.theme.v1", (raw: unknown) => {
+  const value = typeof raw === "object" && raw !== null
+    ? raw as Partial<ThemePreferences>
+    : {};
+
+  return {
+    mode: value.mode === "light" ? "light" : DEFAULT_THEME_MODE,
+    density: value.density === "compact" ? "compact" : DEFAULT_DENSITY,
+  };
 });

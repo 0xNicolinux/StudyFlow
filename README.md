@@ -21,7 +21,8 @@ A aplicação combina organização acadêmica, leitura de materiais, acompanham
 
 ### Personalização
 
-- Cores de destaque globais e acentos específicos por disciplina.
+- Temas claro e escuro, com preferência salva no dispositivo.
+- Densidade da interface configurável, com espaçamento confortável ou compacto.
 - Perfil do estudante separado das configurações.
 - Foto ou avatar animado e capa de perfil, com limites de tamanho documentados na interface.
 - Barra lateral adaptável, com opção de fixar a expansão.
