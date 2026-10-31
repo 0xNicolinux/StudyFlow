@@ -3,9 +3,11 @@ import { useCallback, useRef, useState } from "react";
 import { db } from "@/lib/db";
 import { addMessage, createConversation } from "@/lib/repo";
 import { AiError } from "@/lib/ai/types";
+import { GenerationToolDefinitions, validateGenerationToolCall, type GenerationToolName } from "@/lib/ai/generation";
+import { enqueueGenerationJob } from "@/lib/generation-jobs";
 import { getProvider } from "@/lib/ai/openai-compatible";
 import { assertReady, loadSettings, saveSettings } from "@/lib/ai/settings";
-import { buildContextItems, buildMessages, type ContextItem } from "@/lib/ai/context";
+import { buildContextItems, buildMessages, contextToText, type ContextItem } from "@/lib/ai/context";
 
 export type Excerpt = { id: string; label: string; text: string };
 export type Selection = { useSubject: boolean; noteIds: string[]; docIds: string[]; excerpts: Excerpt[] };
@@ -47,15 +49,63 @@ export function useChat(activeSubjectId: string | null) {
       const settings = loadSettings();
       const all = await db.messages.where("conversationId").equals(convId).sortBy("createdAt");
       const history = (persistUser ? all : all.slice(0, -1)).map((m) => ({ role: m.role, content: m.content }));
-      if (persistUser) await addMessage(convId, "user", text);
+      const sourceMessageId = persistUser
+        ? (await addMessage(convId, "user", text)).id
+        : [...all].reverse().find((message) => message.role === "user")?.id ?? crypto.randomUUID();
       const { messages } = buildMessages(history, text, items);
-      for await (const delta of getProvider(settings.provider).streamChat({ ...cfg, messages, signal: ctrl.signal })) {
-        acc += delta; setStreamText(acc);
+      messages[0].content += " Quando o estudante solicitar explicitamente a criação de flashcards, quiz ou anotação, use a ferramenta correspondente. Não use ferramentas para perguntas conceituais ou simples pedidos de explicação. Se não houver material selecionado e o pedido não indicar um assunto, pergunte se o estudante prefere anexar um material pelo botão de contexto ou informar o assunto manualmente. Se o pedido já indicar o assunto, não exija material. Se faltar qualquer detalhe essencial, pergunte antes de criar. Nunca diga que salvou: apenas solicite a criação; o aplicativo valida e salva.";
+      const toolCalls: Array<{ id: string; name: string; arguments: unknown }> = [];
+      for await (const event of getProvider(settings.provider).streamChat({
+        ...cfg,
+        messages,
+        tools: GenerationToolDefinitions,
+        toolChoice: "auto",
+        signal: ctrl.signal,
+      })) {
+        if (event.type === "text") {
+          acc += event.text;
+          setStreamText(acc);
+        } else {
+          toolCalls.push(event);
+        }
       }
-      if (acc) await addMessage(convId, "assistant", acc);
-      else throw new AiError("stream", "O modelo não retornou conteúdo. Tente novamente ou troque de modelo.");
+
+      // Valida todas as chamadas primeiro: uma chamada malformada não pode deixar as anteriores parcialmente enfileiradas.
+      const validatedCalls = toolCalls.map((call) => ({
+        ...call,
+        validated: validateGenerationToolCall(call.name, call.arguments),
+      }));
+      if (validatedCalls.length) {
+        const contextText = contextToText(items);
+        for (const call of validatedCalls) {
+          await enqueueGenerationJob({
+            kind: call.validated.kind,
+            title: call.validated.title,
+            subjectId: activeSubjectId,
+            source: "chat",
+            sourceKey: `${convId}:${sourceMessageId}:${call.id}`,
+            toolName: call.name as GenerationToolName,
+            payload: call.validated.data,
+            requestText: text,
+            contextText,
+          });
+        }
+        const summary = validatedCalls.map((call) => {
+          const label = call.validated.kind === "flashcards" ? "flashcards" : call.validated.kind === "quiz" ? "quiz" : "anotação";
+          const count = call.validated.kind === "flashcards" ? call.validated.data.cards.length
+            : call.validated.kind === "quiz" ? call.validated.data.questions.length : 1;
+          return `${label} “${call.validated.title}” (${count} ${call.validated.kind === "flashcards" ? "cartões" : call.validated.kind === "quiz" ? "perguntas" : "anotação"})`;
+        }).join(" e ");
+        acc = [acc.trim(), `Estou preparando ${summary}. Avisarei quando estiver pronto.`].filter(Boolean).join("\n\n");
+        setStreamText(acc);
+      }
+      if (acc.trim()) await addMessage(convId, "assistant", acc);
+      else throw new AiError("stream", "O modelo não retornou conteúdo nem solicitou uma ação. Tente novamente ou troque de modelo.");
     } catch (e) {
-      const err = e instanceof AiError ? e : new AiError("stream", "Ocorreu um erro inesperado ao falar com a IA.");
+      const original = e instanceof AiError ? e : new AiError("stream", "Ocorreu um erro inesperado ao falar com a IA.");
+      const err = original.kind === "tools_unsupported"
+        ? new AiError("tools_unsupported", "Este modelo não aceita criação direta pela conversa. Abra Flashcards, Quizzes ou Anotações e use “Gerar com IA” para continuar.")
+        : original;
       // Texto parcial já recebido é preservado e marcado como incompleto; nada é fingido como resposta completa.
       if (acc) await addMessage(convId, "assistant", acc, true);
       if (err.kind !== "aborted" || !acc) setError(err);
@@ -63,7 +113,7 @@ export function useChat(activeSubjectId: string | null) {
       // O texto de streaming permanece até a mensagem gravada aparecer na lista (a tela decide quando ocultá-lo); evita uma "piscada".
       setStreaming(false); abortRef.current = null;
     }
-  }, []);
+  }, [activeSubjectId]);
 
   const start = useCallback(async (text: string, items: ContextItem[]) => {
     let convId = conversationId;

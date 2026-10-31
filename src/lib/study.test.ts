@@ -6,7 +6,7 @@ import { StudyFlowDB, db, __setDb } from "./db";
 import { schedule } from "./srs";
 import { dueCount, formatDuration, quizAverage, retention, secondsPerDay, sessionsSince, totalSeconds } from "./stats";
 import * as pomo from "./pomodoro";
-import { createFlashcard, recordAttempt, recordSession, reviewFlashcard, saveQuiz, deleteQuiz } from "./study-repo";
+import { createFlashcard, createFlashcardsBatch, recordAttempt, recordSession, reviewFlashcard, saveQuiz, deleteQuiz } from "./study-repo";
 import { createSubject, deleteSubject, exportBackup, importBackup } from "./repo";
 import { MAX_FILE_BYTES, MAX_TEXT_CHARS, decodeText, deleteDocument, extractPdf, extractPlain, importFile, searchDocuments, validateFile } from "./docs";
 
@@ -56,6 +56,15 @@ describe("revisão espaçada", () => {
     expect(dueCount([c], 1)).toBe(1);
   });
   it("rejeita cartão vazio", async () => { await expect(createFlashcard({ subjectId: null, front: " ", back: "x" })).rejects.toThrow(); });
+  it("cria um lote de flashcards atomicamente", async () => {
+    const cards = await createFlashcardsBatch({ subjectId: "disc-1", cards: [{ front: "P1", back: "R1" }, { front: "P2", back: "R2" }] });
+    expect(cards).toHaveLength(2);
+    expect(await db.flashcards.count()).toBe(2);
+    expect((await db.flashcards.toArray()).every((card) => card.subjectId === "disc-1")).toBe(true);
+    await expect(createFlashcardsBatch({ subjectId: null, cards: [{ front: "válido", back: "sim" }, { front: " ", back: "inválido" }] })).rejects.toThrow();
+    expect(await db.flashcards.count()).toBe(2);
+  });
+
 });
 
 describe("estatísticas", () => {

@@ -43,6 +43,7 @@ const ROW = "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transit
 export function Sidebar({ view, onNavigate, onNewSubject, onEditSubject, onDeleteSubject, collapsed = false, pin }: Props) {
   const profile = useLiveQuery(() => db.profile.get("me").then((p) => p ?? null), []);
   const subjects = useLiveQuery(() => db.subjects.toArray().then((a) => a.sort((x, y) => x.createdAt - y.createdAt)), []);
+  const unreadJobs = useLiveQuery(() => db.generationJobs.where("status").equals("completed").filter((job) => job.viewedAt === null).toArray(), []);
   const nav = [{ kind: "home" as const, label: "Início", icon: Home }, ...PANEL_NAV];
 
   return (
@@ -72,16 +73,24 @@ export function Sidebar({ view, onNavigate, onNewSubject, onEditSubject, onDelet
       </div>
 
       <nav aria-label="Principal" className="space-y-0.5 px-2">
-        {nav.map(({ kind, label, icon: Icon }) => (
-          <button
-            key={kind}
-            onClick={() => onNavigate({ kind })}
-            aria-current={view.kind === kind ? "page" : undefined}
-            className={cn(ROW, "sidebar-nav-item", view.kind === kind ? "text-fg" : "", collapsed && "sidebar-nav-item--collapsed justify-center px-0")}
-          >
-            <Icon className="size-4 shrink-0" aria-hidden /> <span className={cn(fade(collapsed), collapsed && "w-0")}>{label}</span>
-          </button>
-        ))}
+        {nav.map(({ kind, label, icon: Icon }) => {
+          const generationKind = kind === "flashcards" ? "flashcards" : kind === "quizzes" ? "quiz" : kind === "notes" ? "note" : null;
+          const hasUnread = !!generationKind && unreadJobs?.some((job) => job.kind === generationKind);
+          return (
+            <button
+              key={kind}
+              onClick={() => onNavigate({ kind })}
+              aria-current={view.kind === kind ? "page" : undefined}
+              className={cn(ROW, "sidebar-nav-item", view.kind === kind ? "text-fg" : "", collapsed && "sidebar-nav-item--collapsed justify-center px-0")}
+            >
+              <span className="relative flex size-4 shrink-0 items-center justify-center">
+                <Icon className="size-4" aria-hidden />
+                {hasUnread && <span className="absolute -right-1 -top-0.5 size-1.5 rounded-full bg-accent" aria-label="Conteúdo novo" />}
+              </span>
+              <span className={cn(fade(collapsed), collapsed && "w-0")}>{label}</span>
+            </button>
+          );
+        })}
       </nav>
 
       <div className="h-3 shrink-0" />

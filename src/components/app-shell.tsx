@@ -18,6 +18,7 @@ import { FlashcardsPanel } from "./flashcards-panel";
 import { QuizzesPanel } from "./quizzes-panel";
 import { LibraryPanel } from "./library-panel";
 import { ChatCtx } from "./chat-context";
+import { GenerationProvider } from "./generation-provider";
 import { usePomodoro } from "./use-pomodoro";
 import { ChatView } from "./chat-view";
 import { Composer } from "./composer";
@@ -125,6 +126,10 @@ export function AppShell() {
 
   return (
     <ChatCtx.Provider value={chat}>
+    <GenerationProvider
+      onOpenJob={(job) => navigate({ kind: job.kind === "flashcards" ? "flashcards" : job.kind === "quiz" ? "quizzes" : "notes" })}
+      onOpenLibrary={() => navigate({ kind: "library" })}
+    >
     <div className="app-shell-root flex h-dvh" data-density={density}>
       {/* Reserva o espaço no layout (largo se fixada, só o trilho se não); a barra em si flutua por cima ao expandir. */}
       <div className={cn("relative hidden shrink-0 md:block", side.animate && "transition-[width] duration-200 ease-out", side.pinned ? "w-72" : "w-14")}>
@@ -199,6 +204,7 @@ export function AppShell() {
         onSaved={(s) => { if (!dialog.subject) navigate({ kind: "subject", id: s.id }); }}
       />
     </div>
+    </GenerationProvider>
     </ChatCtx.Provider>
   );
 }

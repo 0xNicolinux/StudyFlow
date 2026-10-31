@@ -1,12 +1,13 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Sparkles, Trash2 } from "lucide-react";
 import { db } from "@/lib/db";
 import { createNote, deleteNote, updateNote } from "@/lib/repo";
 import { cn } from "@/lib/cn";
 import { Button, EmptyState, IconButton, Input, Loading } from "./ui";
 import type { Note } from "@/lib/schemas";
+import { useGeneration } from "./generation-provider";
 
 export function NotesPanel({ subjectId }: { subjectId?: string }) {
   const notes = useLiveQuery(
@@ -14,6 +15,18 @@ export function NotesPanel({ subjectId }: { subjectId?: string }) {
     [subjectId],
   );
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const generation = useGeneration();
+
+  useEffect(() => {
+    void generation.markKindViewed("note", subjectId);
+  }, [generation.jobs, generation.markKindViewed, subjectId]);
+
+  useEffect(() => {
+    const target = generation.openTarget;
+    if (target?.kind !== "note" || !notes?.some((note) => note.id === target.contentId)) return;
+    setSelectedId(target.contentId);
+    generation.clearOpenTarget();
+  }, [generation.openTarget, generation.clearOpenTarget, notes]);
   const selected = notes?.find((n) => n.id === selectedId) ?? null;
 
   async function add() {
@@ -31,6 +44,7 @@ export function NotesPanel({ subjectId }: { subjectId?: string }) {
     <section aria-label="Anotações" className="notes-workspace grid gap-4 md:grid-cols-[14rem_1fr]">
       <div className="space-y-2">
         <Button onClick={add} className="w-full" variant="primary"><Plus className="size-4" aria-hidden /> Nova anotação</Button>
+        <Button onClick={() => generation.openDialog("note", subjectId)} className="w-full" variant="ghost"><Sparkles className="size-4" aria-hidden /> Gerar com IA</Button>
         {notes === undefined ? <Loading /> : notes.length === 0 ? (
           <EmptyState title="Sem anotações" hint="Crie a primeira para começar." />
         ) : (

@@ -52,6 +52,12 @@ A aplicação pode ser configurada para utilizar o OpenRouter ou um endpoint com
 - O envio de conteúdo exige confirmação.
 - O conteúdo que será enviado é apresentado antes do envio.
 - A chave fica no `localStorage`, separada do IndexedDB e do backup de estudos.
+- A conversa pode solicitar a criação de flashcards, quizzes e anotações; as mesmas ações também estão disponíveis nas respectivas categorias.
+- O conteúdo gerado é validado antes de ser salvo automaticamente no IndexedDB.
+- A fila local continua processando durante a navegação entre telas; trabalhos concluídos geram notificação e indicador de conteúdo novo na categoria.
+- Quando um modelo não aceita tool calling, as categorias tentam uma resposta JSON guiada e validada. Na conversa, o app oferece continuar pela categoria.
+- A geração só continua enquanto o StudyFlow estiver aberto. Se a página for fechada ou recarregada durante uma tarefa, ela aparece como interrompida e pode ser tentada novamente.
+- O envio de materiais selecionados também exige confirmação explícita, mostrando provedor e modelo antes do envio.
 
 A comunicação com o provedor de IA é externa à arquitetura local-first; revise o conteúdo antes de confirmar qualquer envio.
 
@@ -130,7 +136,7 @@ A antiga suíte E2E em Python foi removida por depender de URLs, portas e seleto
 - PDFs escaneados, protegidos por senha ou corrompidos não são processados pela extração atual.
 - Uma sessão de foco que termina com o aplicativo fechado é registrada ao reabrir com base no tempo planejado.
 - Dados locais não são sincronizados entre dispositivos.
-- O envio para IA depende de configuração e confirmação explícita do usuário.
+- O envio para IA depende de configuração e confirmação explícita do usuário; a fila de geração não é um serviço em segundo plano do servidor e não continua após fechar o navegador.
 
 ## Status do projeto
 

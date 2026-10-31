@@ -1,7 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { CheckCircle2, Pencil, Play, Plus, Trash2, XCircle } from "lucide-react";
+import { CheckCircle2, Pencil, Play, Plus, Sparkles, Trash2, XCircle } from "lucide-react";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { deleteQuiz, recordAttempt, saveQuiz, type QuizDraft } from "@/lib/study-repo";
@@ -9,6 +9,7 @@ import { quizAverage } from "@/lib/stats";
 import { cn } from "@/lib/cn";
 import { Button, EmptyState, Field, IconButton, Input, Loading } from "./ui";
 import type { Quiz, Subject } from "@/lib/schemas";
+import { useGeneration } from "./generation-provider";
 
 type Mode = { kind: "list" } | { kind: "edit"; quiz: Quiz | null } | { kind: "take"; quiz: Quiz };
 
@@ -17,6 +18,20 @@ export function QuizzesPanel({ subjectId }: { subjectId?: string }) {
   const attempts = useLiveQuery(() => db.quizAttempts.toArray(), []);
   const subjects = useLiveQuery(() => db.subjects.toArray(), []);
   const [mode, setMode] = useState<Mode>({ kind: "list" });
+  const generation = useGeneration();
+
+  useEffect(() => {
+    void generation.markKindViewed("quiz", subjectId);
+  }, [generation.jobs, generation.markKindViewed, subjectId]);
+
+  useEffect(() => {
+    const target = generation.openTarget;
+    if (target?.kind !== "quiz" || !quizzes) return;
+    const found = quizzes.find((quiz) => quiz.id === target.contentId);
+    if (!found) return;
+    setMode({ kind: "take", quiz: found });
+    generation.clearOpenTarget();
+  }, [generation.openTarget, generation.clearOpenTarget, quizzes]);
 
   if (!quizzes || !attempts || !subjects) return <Loading />;
   if (mode.kind === "edit") return <Editor quiz={mode.quiz} subjectId={subjectId} subjects={subjects} onDone={() => setMode({ kind: "list" })} />;
@@ -26,7 +41,10 @@ export function QuizzesPanel({ subjectId }: { subjectId?: string }) {
     <section aria-label="Quizzes" className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm text-muted">{quizzes.length === 0 ? "Crie quizzes para testar o que você já sabe." : `Média geral de acertos: ${quizAverage(attempts.filter((a) => quizzes.some((q) => q.id === a.quizId))) ?? "—"}${quizAverage(attempts.filter((a) => quizzes.some((q) => q.id === a.quizId))) === null ? "" : "%"}`}</p>
-        <Button variant="primary" onClick={() => setMode({ kind: "edit", quiz: null })}><Plus className="size-4" aria-hidden /> Novo quiz</Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="ghost" onClick={() => generation.openDialog("quiz", subjectId)}><Sparkles className="size-4" aria-hidden /> Gerar com IA</Button>
+          <Button variant="primary" onClick={() => setMode({ kind: "edit", quiz: null })}><Plus className="size-4" aria-hidden /> Novo quiz</Button>
+        </div>
       </div>
       {quizzes.length === 0 ? <EmptyState title="Nenhum quiz ainda" hint="Monte perguntas de múltipla escolha com a resposta correta; o app registra seu desempenho." /> : (
         <ul className="space-y-2">
